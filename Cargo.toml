@@ -1,0 +1,24 @@
+[package]
+name = "compress-tools"
+version = "0.1.0-alpha.0"
+authors = ["Jonathas-Conceicao <jadoliveira@inf.ufpel.edu.br>"]
+description = "Utility functions for compressed and archive files handling"
+repository = "https://github.com/OSSystems/compress-tools-rs"
+homepage = "https://github.com/OSSystems/compress-tools-rs"
+documentation = "https://docs.rs/compress-tools"
+keywords = ["compression", "archive"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+edition = "2018"
+
+[badges]
+travis-ci = { repository = "OSSystems/compress-tools-rs" }
+
+[dependencies]
+failure = "0.1"
+pipers = "1"
+
+[dev-dependencies]
+exitfailure = "0.5"
+structopt = "0.2"
+tempfile = "3"
