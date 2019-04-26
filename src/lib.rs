@@ -70,16 +70,12 @@ mod test {
             .metadata()
             .expect("tree/branch1/leaf not found in extracted directory structure");
         assert_eq!(leaf1.mode() % 0o1000, 0o664);
-        assert_eq!(leaf1.uid(), 1000);
-        assert_eq!(leaf1.gid(), 1000);
 
         let leaf2 = p
             .join("tree/branch2/leaf")
             .metadata()
             .expect("tree/branch1/leaf not found in extracted directory structure");
         assert_eq!(leaf2.mode() % 0o1000, 0o664);
-        assert_eq!(leaf2.uid(), 1000);
-        assert_eq!(leaf2.gid(), 1000);
     }
 
     fn assert_file(p: &Path) {
@@ -87,8 +83,6 @@ mod test {
             .metadata()
             .expect("tree.tar not found in extracted directory");
         assert_eq!(tree.mode() % 0o1000, 0o664);
-        assert_eq!(tree.uid(), 1000);
-        assert_eq!(tree.gid(), 1000);
     }
 
     #[test]
