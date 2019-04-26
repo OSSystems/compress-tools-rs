@@ -6,8 +6,10 @@
 
 # Examples
 ```
+use compress_tools;
+
 let dir = tempfile::tempdir().unwrap();
-uncompress("tests/fixtures/tree.tar.gz", dir.path(), Kind::TarGZip).unwrap();
+compress_tools::uncompress("tests/fixtures/tree.tar.gz", dir.path(), compress_tools::Kind::TarGZip).unwrap();
 ```
 */
 
