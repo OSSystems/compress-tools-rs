@@ -43,18 +43,20 @@ where
     let source = uncompress::Uncompress::new(source.as_ref());
     let target = target.as_ref();
     match kind {
-        Kind::TarGZip => source.gz().tar(target),
-        Kind::TarBZip2 => source.bz2().tar(target),
-        Kind::TarXz => source.xz().tar(target),
-        Kind::TarLZMA => source.lzma().tar(target),
-        Kind::TarLZip => source.lz().tar(target),
-        Kind::Tar => source.tar(target),
-
-        Kind::GZip => source.gz().file(target),
+        // Single files
         Kind::BZip2 => source.bz2().file(target),
-        Kind::Xz => source.xz().file(target),
+        Kind::GZip => source.gz().file(target),
         Kind::LZMA => source.lzma().file(target),
         Kind::LZip => source.lzip().file(target),
+        Kind::Xz => source.xz().file(target),
+
+        // Archive files
+        Kind::Tar => source.tar(target),
+        Kind::TarBZip2 => source.bz2().tar(target),
+        Kind::TarGZip => source.gz().tar(target),
+        Kind::TarLZMA => source.lzma().tar(target),
+        Kind::TarLZip => source.lzip().tar(target),
+        Kind::TarXz => source.xz().tar(target),
     }
 }
 
