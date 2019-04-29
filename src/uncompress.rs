@@ -35,7 +35,7 @@ impl Uncompress {
         Uncompress(self.0.then("xz --format=lzma -dc"))
     }
 
-    pub fn lz(self) -> Uncompress {
+    pub fn lzip(self) -> Uncompress {
         Uncompress(self.0.then("lzip -dc"))
     }
 

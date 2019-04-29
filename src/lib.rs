@@ -54,7 +54,7 @@ where
         Kind::BZip2 => source.bz2().file(target),
         Kind::Xz => source.xz().file(target),
         Kind::LZMA => source.lzma().file(target),
-        Kind::LZip => source.lz().file(target),
+        Kind::LZip => source.lzip().file(target),
     }
 }
 
@@ -118,9 +118,9 @@ mod test {
     }
 
     #[test]
-    fn uncompress_tar_lz() {
+    fn uncompress_tar_lzip() {
         let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.lz", dir.path(), Kind::TarLZip)
+        uncompress("tests/fixtures/tree.tar.lzip", dir.path(), Kind::TarLZip)
             .expect("Failed to uncompress file");
         assert_tree(dir.path())
     }
@@ -182,10 +182,10 @@ mod test {
     }
 
     #[test]
-    fn uncompress_lz() {
+    fn uncompress_lzip() {
         let dir = tempfile::tempdir().expect("Unable to create temp dir");
         uncompress(
-            "tests/fixtures/tree.tar.lz",
+            "tests/fixtures/tree.tar.lzip",
             &dir.path().join("tree.tar"),
             Kind::LZip,
         )
