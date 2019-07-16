@@ -42,7 +42,10 @@ impl Uncompress {
     pub fn tar(self, dir: &Path) -> Result<(), failure::Error> {
         let out = self
             .0
-            .then(&format!("tar -xC {}", dir.display()))
+            .then(&format!(
+                "tar --same-owner --preserve-permissions --xattrs -xC {}",
+                dir.display()
+            ))
             .finally()?
             .wait_with_output()?;
         ensure!(
