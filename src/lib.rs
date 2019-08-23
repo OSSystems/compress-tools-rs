@@ -84,7 +84,7 @@ mod test {
         let tree = p
             .metadata()
             .expect("tree.tar not found in extracted directory");
-        assert_eq!(tree.mode() % 0o1000, 0o664);
+        assert_eq!(tree.mode() % 0o1000, 0o644);
     }
 
     #[test]
