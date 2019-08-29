@@ -20,19 +20,19 @@ impl Uncompress {
     }
 
     pub fn gz(self) -> Uncompress {
-        Uncompress(self.0.then("gzip -dc"))
+        Uncompress(self.0.then("zcat"))
     }
 
     pub fn bz2(self) -> Uncompress {
-        Uncompress(self.0.then("bzip2 -dc"))
+        Uncompress(self.0.then("bzcat"))
     }
 
     pub fn xz(self) -> Uncompress {
-        Uncompress(self.0.then("xz -dc"))
+        Uncompress(self.0.then("xzcat"))
     }
 
     pub fn lzma(self) -> Uncompress {
-        Uncompress(self.0.then("xz --format=lzma -dc"))
+        Uncompress(self.0.then("lzcat"))
     }
 
     pub fn lzip(self) -> Uncompress {
