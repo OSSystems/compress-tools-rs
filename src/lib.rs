@@ -34,7 +34,8 @@ pub enum Kind {
     LZMA,
 }
 
-/// Uncompress a archive of known [Kind](Kind) pointed by source to target location for file
+/// Uncompress a archive of known [Kind](Kind) pointed by source to target
+/// location for file
 pub fn uncompress<P1, P2>(source: P1, target: P2, kind: Kind) -> Result<(), failure::Error>
 where
     P1: AsRef<Path>,
@@ -64,7 +65,6 @@ where
 mod test {
     use super::*;
     use std::os::unix::fs::MetadataExt;
-    use tempfile;
 
     fn assert_tree(p: &Path) {
         let leaf1 = p
