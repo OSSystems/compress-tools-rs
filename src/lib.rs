@@ -5,7 +5,7 @@
 /*! The library provide tools for handling compressed and archive files
 
 # Examples
-```
+```no_run
 use compress_tools;
 
 let dir = tempfile::tempdir().unwrap();
@@ -64,134 +64,195 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::os::unix::fs::MetadataExt;
+    use std::{
+        env, fs,
+        io::{Read, Write},
+        os::unix::fs::PermissionsExt,
+        path::PathBuf,
+    };
+    use tempfile::TempDir;
 
-    fn assert_tree(p: &Path) {
-        let leaf1 = p
-            .join("tree/branch1/leaf")
-            .metadata()
-            .expect("tree/branch1/leaf not found in extracted directory structure");
-        assert_eq!(leaf1.mode() % 0o1000, 0o664);
+    fn create_echo_bin(bin: &Path, output: &Path) -> Result<(), failure::Error> {
+        let mut file = std::fs::File::create(bin)?;
+        file.write_all(
+            format!(
+                "#!/bin/sh\necho {} $@ >> {:?};sleep 0.2\n",
+                bin.file_name().unwrap().to_str().unwrap(),
+                output
+            )
+            .as_bytes(),
+        )?;
+        file.set_permissions(fs::Permissions::from_mode(0o777))?;
 
-        let leaf2 = p
-            .join("tree/branch2/leaf")
-            .metadata()
-            .expect("tree/branch1/leaf not found in extracted directory structure");
-        assert_eq!(leaf2.mode() % 0o1000, 0o664);
+        Ok(())
     }
 
-    fn assert_file(p: &Path) {
-        let tree = p
-            .metadata()
-            .expect("tree.tar not found in extracted directory");
-        assert_eq!(tree.mode() % 0o1000, 0o644);
+    pub fn create_echo_bins(bins: &[&str]) -> Result<(TempDir, PathBuf), failure::Error> {
+        let mocks = tempfile::tempdir()?;
+        let mocks_dir = mocks.path();
+        let calls = mocks_dir.join("calls");
+
+        for bin in bins {
+            create_echo_bin(&mocks_dir.join(bin), &calls)?;
+        }
+
+        env::set_var(
+            "PATH",
+            format!(
+                "{}{}",
+                mocks_dir.display(),
+                &env::var("PATH")
+                    .map(|s| format!(":{}", s))
+                    .unwrap_or_default()
+            ),
+        );
+
+        Ok((mocks, calls))
+    }
+
+    fn assert_calls(p: &Path, expected: &[&str]) {
+        let mut content = String::default();
+        fs::File::open(p)
+            .unwrap()
+            .read_to_string(&mut content)
+            .unwrap();
+        for call in expected {
+            assert!(
+                content.contains(call),
+                format!(
+                    "uncompress did not call the expected: '{}'\nFull content:\n{}",
+                    call, content
+                )
+            );
+        }
     }
 
     #[test]
     fn uncompress_tar_gz() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.gz", dir.path(), Kind::TarGZip)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "zcat"]).unwrap();
+        uncompress("test.tar.gz", &PathBuf::from("target"), Kind::TarGZip)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar.gz",
+                "zcat",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_tar_bz2() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.bz2", dir.path(), Kind::TarBZip2)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "bzcat"]).unwrap();
+        uncompress("test.tar.bz2", &PathBuf::from("target"), Kind::TarBZip2)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar.bz2",
+                "bzcat",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_tar_xz() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.xz", dir.path(), Kind::TarXz)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "xzcat"]).unwrap();
+        uncompress("test.tar.xz", &PathBuf::from("target"), Kind::TarXz)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar.xz",
+                "xzcat",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_tar_lzma() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.lzma", dir.path(), Kind::TarLZMA)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "lzcat"]).unwrap();
+        uncompress("test.tar.lzma", &PathBuf::from("target"), Kind::TarLZMA)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar.lzma",
+                "lzcat",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_tar_lzip() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar.lzip", dir.path(), Kind::TarLZip)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "lzip"]).unwrap();
+        uncompress("test.tar.lzip", &PathBuf::from("target"), Kind::TarLZip)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar.lzip",
+                "lzip -dc",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_tar() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress("tests/fixtures/tree.tar", dir.path(), Kind::Tar)
+        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar"]).unwrap();
+        uncompress("test.tar", &PathBuf::from("target"), Kind::Tar)
             .expect("Failed to uncompress file");
-        assert_tree(dir.path())
+        assert_calls(
+            &calls,
+            &[
+                "cat test.tar",
+                "tar --same-owner --preserve-permissions --xattrs -xC target",
+            ],
+        );
     }
 
     #[test]
     fn uncompress_gz() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress(
-            "tests/fixtures/tree.tar.gz",
-            &dir.path().join("tree.tar"),
-            Kind::GZip,
-        )
-        .expect("Failed to uncompress file");
-        assert_file(&dir.path().join("tree.tar"))
+        let (dir_handle, calls) = create_echo_bins(&["cat", "zcat"]).unwrap();
+        uncompress("test.gz", &dir_handle.path().join("target"), Kind::GZip)
+            .expect("Failed to uncompress file");
+        assert_calls(&calls, &["cat test.gz", "zcat"]);
     }
 
     #[test]
     fn uncompress_bz2() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress(
-            "tests/fixtures/tree.tar.bz2",
-            &dir.path().join("tree.tar"),
-            Kind::BZip2,
-        )
-        .expect("Failed to uncompress file");
-        assert_file(&dir.path().join("tree.tar"))
+        let (dir_handle, calls) = create_echo_bins(&["cat", "bzcat"]).unwrap();
+        uncompress("test.bz2", &dir_handle.path().join("target"), Kind::BZip2)
+            .expect("Failed to uncompress file");
+        assert_calls(&calls, &["cat test.bz2", "bzcat"]);
     }
 
     #[test]
     fn uncompress_xz() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress(
-            "tests/fixtures/tree.tar.xz",
-            &dir.path().join("tree.tar"),
-            Kind::Xz,
-        )
-        .expect("Failed to uncompress file");
-        assert_file(&dir.path().join("tree.tar"))
+        let (dir_handle, calls) = create_echo_bins(&["cat", "xzcat"]).unwrap();
+        uncompress("test.xz", &dir_handle.path().join("target"), Kind::Xz)
+            .expect("Failed to uncompress file");
+        assert_calls(&calls, &["cat test.xz", "xzcat"]);
     }
 
     #[test]
     fn uncompress_lzma() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress(
-            "tests/fixtures/tree.tar.lzma",
-            &dir.path().join("tree.tar"),
-            Kind::LZMA,
-        )
-        .expect("Failed to uncompress file");
-        assert_file(&dir.path().join("tree.tar"))
+        let (dir_handle, calls) = create_echo_bins(&["cat", "lzcat"]).unwrap();
+        uncompress("test.lzma", &dir_handle.path().join("target"), Kind::LZMA)
+            .expect("Failed to uncompress file");
+        assert_calls(&calls, &["cat test.lzma", "lzcat"]);
     }
 
     #[test]
     fn uncompress_lzip() {
-        let dir = tempfile::tempdir().expect("Unable to create temp dir");
-        uncompress(
-            "tests/fixtures/tree.tar.lzip",
-            &dir.path().join("tree.tar"),
-            Kind::LZip,
-        )
-        .expect("Failed to uncompress file");
-        assert_file(&dir.path().join("tree.tar"))
+        let (dir_handle, calls) = create_echo_bins(&["cat", "lzip"]).unwrap();
+        uncompress("test.lzip", &dir_handle.path().join("target"), Kind::LZip)
+            .expect("Failed to uncompress file");
+        assert_calls(&calls, &["cat test.lzip", "lzip -dc"]);
     }
 }
