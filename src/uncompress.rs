@@ -55,6 +55,19 @@ impl Uncompress {
         Ok(())
     }
 
+    pub fn unzip(self, dir: &Path) -> Result<(), failure::Error> {
+        let out = self
+            .0
+            .then(&format!("unzip -X -d {}", dir.display()))
+            .finally()?
+            .wait_with_output()?;
+        ensure!(
+            out.status.success(),
+            format!("Extract process exited with error:{:#?}", out)
+        );
+        Ok(())
+    }
+
     pub fn file(self, target: &Path) -> Result<(), failure::Error> {
         let out = self.0.finally()?.wait_with_output()?;
         ensure!(
