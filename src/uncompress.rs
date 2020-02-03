@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use failure::ensure;
 use pipers::Pipe;
 use std::{fs, io::Write, path::Path};
+
+use derive_more::{Display, From};
 
 // Uncompress structure works by pipping the file through uncompress commands,
 // Uncompress::new is used to start the stream with a `cat` from shell,
@@ -13,6 +14,23 @@ use std::{fs, io::Write, path::Path};
 // Uncompress::file if the expected output is a single file,
 // or Uncompress::tar expected output is a directory tree.
 pub struct Uncompress(Pipe);
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Display, From)]
+pub enum Error {
+    #[display(fmt = "Io error: {}", _0)]
+    Io(std::io::Error),
+    #[from(ignore)]
+    #[display(fmt = "Command error: {}", _0)]
+    CommandError(String),
+}
+
+impl From<std::process::Output> for Error {
+    fn from(out: std::process::Output) -> Self {
+        Error::CommandError(String::from_utf8_lossy(&out.stderr).to_string())
+    }
+}
 
 impl Uncompress {
     pub fn new(file: &Path) -> Self {
@@ -39,7 +57,7 @@ impl Uncompress {
         Uncompress(self.0.then("lzip -dc"))
     }
 
-    pub fn tar(self, dir: &Path) -> Result<(), failure::Error> {
+    pub fn tar(self, dir: &Path) -> Result<()> {
         let out = self
             .0
             .then(&format!(
@@ -48,33 +66,37 @@ impl Uncompress {
             ))
             .finally()?
             .wait_with_output()?;
-        ensure!(
-            out.status.success(),
-            format!("Extract process exited with error:{:#?}", out)
-        );
-        Ok(())
+
+        if !out.status.success() {
+            Err(Error::from(out))
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn unzip(self, dir: &Path) -> Result<(), failure::Error> {
+    pub fn unzip(self, dir: &Path) -> Result<()> {
         let out = self
             .0
             .then(&format!("unzip -X -d {}", dir.display()))
             .finally()?
             .wait_with_output()?;
-        ensure!(
-            out.status.success(),
-            format!("Extract process exited with error:{:#?}", out)
-        );
-        Ok(())
+
+        if !out.status.success() {
+            Err(Error::from(out))
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn file(self, target: &Path) -> Result<(), failure::Error> {
+    pub fn file(self, target: &Path) -> Result<()> {
         let out = self.0.finally()?.wait_with_output()?;
-        ensure!(
-            out.status.success(),
-            format!("Extract process exited with error:{:#?}", out)
-        );
+
         fs::File::create(target)?.write_all(&out.stdout)?;
-        Ok(())
+
+        if !out.status.success() {
+            Err(Error::from(out))
+        } else {
+            Ok(())
+        }
     }
 }

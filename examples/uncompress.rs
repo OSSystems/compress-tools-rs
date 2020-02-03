@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use compress_tools::uncompress;
+use compress_tools::{uncompress, Result};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -28,7 +28,7 @@ struct Args {
     output: PathBuf,
 }
 
-fn main() -> Result<(), failure::Error> {
+fn main() -> Result<()> {
     match Opt::from_args() {
         Opt::TarGz(arg) => uncompress(arg.input, arg.output, compress_tools::Kind::TarGZip),
         Opt::TarXz(arg) => uncompress(arg.input, arg.output, compress_tools::Kind::TarXz),

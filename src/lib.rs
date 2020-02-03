@@ -15,6 +15,8 @@ compress_tools::uncompress("tests/fixtures/tree.tar.gz", dir.path(), compress_to
 
 mod uncompress;
 
+pub use uncompress::Result;
+
 use std::path::Path;
 
 /// Type of compressed file or archive
@@ -37,7 +39,7 @@ pub enum Kind {
 
 /// Uncompress a archive of known [Kind](Kind) pointed by source to target
 /// location for file
-pub fn uncompress<P1, P2>(source: P1, target: P2, kind: Kind) -> Result<(), failure::Error>
+pub fn uncompress<P1, P2>(source: P1, target: P2, kind: Kind) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
@@ -74,7 +76,7 @@ mod test {
     };
     use tempfile::TempDir;
 
-    fn create_echo_bin(bin: &Path, output: &Path) -> Result<(), failure::Error> {
+    fn create_echo_bin(bin: &Path, output: &Path) -> Result<()> {
         let mut file = std::fs::File::create(bin)?;
         file.write_all(
             format!(
@@ -89,7 +91,7 @@ mod test {
         Ok(())
     }
 
-    pub fn create_echo_bins(bins: &[&str]) -> Result<(TempDir, PathBuf), failure::Error> {
+    pub fn create_echo_bins(bins: &[&str]) -> Result<(TempDir, PathBuf)> {
         let mocks = tempfile::tempdir()?;
         let mocks_dir = mocks.path();
         let calls = mocks_dir.join("calls");
