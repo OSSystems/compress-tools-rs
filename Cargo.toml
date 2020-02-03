@@ -16,8 +16,8 @@ build = "build.rs"
 travis-ci = { repository = "OSSystems/compress-tools-rs" }
 
 [dependencies]
-failure = "0.1"
 pipers = "1"
+derive_more = "0.99"
 
 [dev-dependencies]
 exitfailure = "0.5"
