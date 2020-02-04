@@ -2,7 +2,7 @@
 
 # compress-tools
 
-The library provide tools for handling compressed and archive files
+The library provides tools for handling compressed and archive files.
 
 ## Examples
 ```rust
