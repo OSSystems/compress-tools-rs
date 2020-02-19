@@ -77,7 +77,7 @@ impl Uncompress {
     pub fn unzip(self, dir: &Path) -> Result<()> {
         let out = self
             .0
-            .then(&format!("unzip -X -d {}", dir.display()))
+            .then(&format!("unzip - -o -d {}", dir.display()))
             .finally()?
             .wait_with_output()?;
 

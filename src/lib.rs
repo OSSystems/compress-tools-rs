@@ -265,6 +265,6 @@ mod test {
         let (dir_handle, calls) = create_echo_bins(&["cat", "unzip"]).unwrap();
         uncompress("test.zip", &dir_handle.path().join("target"), Kind::Zip)
             .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.zip", "unzip -X -d"]);
+        assert_calls(&calls, &["cat test.zip", "unzip - -o -d"]);
     }
 }
