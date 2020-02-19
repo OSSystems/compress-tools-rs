@@ -15,7 +15,7 @@ compress_tools::uncompress("tests/fixtures/tree.tar.gz", dir.path(), compress_to
 
 mod uncompress;
 
-pub use uncompress::Result;
+pub use uncompress::{Error, Result};
 
 use std::path::Path;
 
