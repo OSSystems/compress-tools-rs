@@ -2,269 +2,306 @@
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-/*! The library provide tools for handling compressed and archive files
+mod error;
+mod ffi;
 
-# Examples
-```no_run
-use compress_tools;
+use error::archive_result;
+pub use error::{Error, Result};
+use std::{
+    ffi::{CStr, CString},
+    io::{Read, Write},
+    os::raw::c_void,
+    path::Path,
+    slice,
+};
 
-let dir = tempfile::tempdir().unwrap();
-compress_tools::uncompress("tests/fixtures/tree.tar.gz", dir.path(), compress_tools::Kind::TarGZip).unwrap();
-```
-*/
+const READER_BUFFER_SIZE: usize = 1024;
 
-mod uncompress;
-
-pub use uncompress::{Error, Result};
-
-use std::path::Path;
-
-/// Type of compressed file or archive
-#[derive(Copy, Clone, Debug)]
-pub enum Kind {
-    TarGZip,
-    TarBZip2,
-    TarXz,
-    TarLZMA,
-    TarLZip,
-    Tar,
-    Zip,
-
-    GZip,
-    BZip2,
-    Xz,
-    LZip,
-    LZMA,
+struct Pipe<'a> {
+    reader: &'a mut dyn Read,
+    buffer: &'a mut [u8],
 }
 
-/// Uncompress a archive of known [Kind](Kind) pointed by source to target
-/// location for file
-pub fn uncompress<P1, P2>(source: P1, target: P2, kind: Kind) -> Result<()>
+enum Mode {
+    AllFormat,
+    RawFormat,
+    WriteDisk,
+}
+
+/// Reads the input buffer and extract to another buffer.
+///
+/// # Arguments
+///
+/// * `source` - Reader.
+/// * `target` - Writer.
+///
+/// # Example
+///
+/// uncompress_file(std::io::Read, std::io::Write)?;
+pub fn uncompress_file<R, W>(source: &mut R, target: &mut W) -> Result<()>
 where
-    P1: AsRef<Path>,
-    P2: AsRef<Path>,
+    R: Read + 'static,
+    W: Write,
 {
-    let source = uncompress::Uncompress::new(source.as_ref());
-    let target = target.as_ref();
-    match kind {
-        // Single files
-        Kind::BZip2 => source.bz2().file(target),
-        Kind::GZip => source.gz().file(target),
-        Kind::LZMA => source.lzma().file(target),
-        Kind::LZip => source.lzip().file(target),
-        Kind::Xz => source.xz().file(target),
+    run_with_archive(
+        Mode::RawFormat,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            archive_result(
+                ffi::archive_read_next_header(archive_reader, &mut entry),
+                archive_reader,
+            )?;
+            libarchive_write_data_block(archive_reader, target)
+        },
+    )
+}
 
-        // Archive files
-        Kind::Tar => source.tar(target),
-        Kind::TarBZip2 => source.bz2().tar(target),
-        Kind::TarGZip => source.gz().tar(target),
-        Kind::TarLZMA => source.lzma().tar(target),
-        Kind::TarLZip => source.lzip().tar(target),
-        Kind::TarXz => source.xz().tar(target),
-        Kind::Zip => source.unzip(target),
+/// Reads the input buffer and extract to directory.
+///
+/// # Arguments
+///
+/// * `source` - Reader.
+/// * `path` - Path to extract the target buffer.
+///
+/// # Example
+///
+/// uncompress_archive(std::io::Read, &str)?;
+pub fn uncompress_archive<R>(source: &mut R, dir_path: &Path) -> Result<()>
+where
+    R: Read + 'static,
+{
+    run_with_archive(
+        Mode::WriteDisk,
+        source,
+        |archive_reader, archive_writer, mut entry| unsafe {
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_EOF => return Ok(()),
+                    ffi::ARCHIVE_OK => {
+                        let target_path = dir_path
+                            .join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
+                        ffi::archive_entry_set_pathname(
+                            entry,
+                            CString::new(target_path.to_str().unwrap())
+                                .unwrap()
+                                .into_raw(),
+                        );
+
+                        let link_name = ffi::archive_entry_hardlink(entry);
+                        if !link_name.is_null() {
+                            let target_path = dir_path.join(CStr::from_ptr(link_name).to_str()?);
+                            ffi::archive_entry_set_hardlink(
+                                entry,
+                                CString::new(target_path.to_str().unwrap())
+                                    .unwrap()
+                                    .into_raw(),
+                            );
+                        }
+
+                        ffi::archive_write_header(archive_writer, entry);
+                        libarchive_copy_data(archive_reader, archive_writer)?;
+
+                        if ffi::archive_write_finish_entry(archive_writer) != ffi::ARCHIVE_OK {
+                            return Err(Error::from(archive_writer));
+                        }
+                    }
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+        },
+    )
+}
+
+/// Reads the input buffer and extract a file to another buffer.
+///
+/// # Arguments
+///
+/// * `source` - Reader.
+/// * `target` - Writer.
+/// * `path` - File path to extract to the target.
+///
+/// # Example
+///
+/// uncompress_archive_file(std::io::Read, std::io::Write, &str)?;
+pub fn uncompress_archive_file<R, W>(source: &mut R, target: &mut W, path: &str) -> Result<()>
+where
+    R: Read + 'static,
+    W: Write,
+{
+    run_with_archive(
+        Mode::AllFormat,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_OK => {
+                        let file_name =
+                            CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?;
+                        if file_name == path {
+                            break;
+                        }
+                    }
+                    ffi::ARCHIVE_EOF => return Err(Error::FileNotFound),
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+            libarchive_write_data_block(archive_reader, target)
+        },
+    )
+}
+
+fn run_with_archive<F, R>(mode: Mode, reader: &mut R, f: F) -> Result<()>
+where
+    F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<()>,
+    R: Read + 'static,
+{
+    let archive_reader: *mut ffi::archive;
+    let archive_writer: *mut ffi::archive;
+    let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
+
+    unsafe {
+        archive_reader = ffi::archive_read_new();
+        archive_writer = ffi::archive_write_disk_new();
+        archive_result(
+            ffi::archive_read_support_filter_all(archive_reader),
+            archive_reader,
+        )?;
+        match mode {
+            Mode::RawFormat => archive_result(
+                ffi::archive_read_support_format_raw(archive_reader),
+                archive_reader,
+            )?,
+            Mode::AllFormat => archive_result(
+                ffi::archive_read_support_format_all(archive_reader),
+                archive_reader,
+            )?,
+            Mode::WriteDisk => {
+                let writer_flags = (ffi::ARCHIVE_EXTRACT_TIME
+                    | ffi::ARCHIVE_EXTRACT_PERM
+                    | ffi::ARCHIVE_EXTRACT_ACL
+                    | ffi::ARCHIVE_EXTRACT_FFLAGS
+                    | ffi::ARCHIVE_EXTRACT_OWNER
+                    | ffi::ARCHIVE_EXTRACT_XATTR) as i32;
+
+                archive_result(
+                    ffi::archive_write_disk_set_options(archive_writer, writer_flags),
+                    archive_writer,
+                )?;
+                archive_result(
+                    ffi::archive_write_disk_set_standard_lookup(archive_writer),
+                    archive_writer,
+                )?;
+                archive_result(
+                    ffi::archive_read_support_format_all(archive_reader),
+                    archive_reader,
+                )?;
+                archive_result(
+                    ffi::archive_read_support_format_raw(archive_reader),
+                    archive_reader,
+                )?;
+            }
+        }
+
+        if archive_reader.is_null() {
+            return Err(Error::ArchiveNull);
+        }
+
+        if archive_writer.is_null() {
+            return Err(Error::ArchiveNull);
+        }
+
+        let mut pipe = Pipe {
+            reader: &mut Box::new(reader),
+            buffer: &mut [0; READER_BUFFER_SIZE],
+        };
+
+        archive_result(
+            ffi::archive_read_open(
+                archive_reader,
+                (&mut pipe as *mut Pipe) as *mut c_void,
+                None,
+                Some(libarchive_read_callback),
+                None,
+            ),
+            archive_reader,
+        )?;
+
+        f(archive_reader, archive_writer, archive_entry)?;
+
+        archive_result(ffi::archive_read_close(archive_reader), archive_reader)?;
+        archive_result(ffi::archive_read_free(archive_reader), archive_reader)?;
+        archive_result(ffi::archive_write_close(archive_writer), archive_writer)?;
+        archive_result(ffi::archive_write_free(archive_writer), archive_writer)?;
+        ffi::archive_entry_free(archive_entry);
+    }
+    Ok(())
+}
+
+fn libarchive_copy_data(
+    archive_reader: *mut ffi::archive,
+    archive_writer: *mut ffi::archive,
+) -> Result<()> {
+    let mut buffer = std::ptr::null();
+    let mut offset = 0;
+    let mut size = 0;
+
+    unsafe {
+        loop {
+            match ffi::archive_read_data_block(archive_reader, &mut buffer, &mut size, &mut offset)
+            {
+                ffi::ARCHIVE_EOF => return Ok(()),
+                ffi::ARCHIVE_OK => {
+                    archive_result(
+                        ffi::archive_write_data_block(archive_writer, buffer, size, offset) as i32,
+                        archive_writer,
+                    )?;
+                }
+                _ => return Err(Error::from(archive_reader)),
+            }
+        }
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use std::{
-        env, fs,
-        io::{Read, Write},
-        os::unix::fs::PermissionsExt,
-        path::PathBuf,
-    };
-    use tempfile::TempDir;
+unsafe fn libarchive_write_data_block<W>(
+    archive_reader: *mut ffi::archive,
+    target: &mut W,
+) -> Result<()>
+where
+    W: Write,
+{
+    let mut buffer = std::ptr::null();
+    let mut offset = 0;
+    let mut size = 0;
 
-    fn create_echo_bin(bin: &Path, output: &Path) -> Result<()> {
-        let mut file = std::fs::File::create(bin)?;
-        file.write_all(
-            format!(
-                "#!/bin/sh\necho {} $@ >> {:?};sleep 0.2\n",
-                bin.file_name().unwrap().to_str().unwrap(),
-                output
-            )
-            .as_bytes(),
-        )?;
-        file.set_permissions(fs::Permissions::from_mode(0o777))?;
-
-        Ok(())
-    }
-
-    pub fn create_echo_bins(bins: &[&str]) -> Result<(TempDir, PathBuf)> {
-        let mocks = tempfile::tempdir()?;
-        let mocks_dir = mocks.path();
-        let calls = mocks_dir.join("calls");
-
-        for bin in bins {
-            create_echo_bin(&mocks_dir.join(bin), &calls)?;
-        }
-
-        env::set_var(
-            "PATH",
-            format!(
-                "{}{}",
-                mocks_dir.display(),
-                &env::var("PATH")
-                    .map(|s| format!(":{}", s))
-                    .unwrap_or_default()
-            ),
-        );
-
-        Ok((mocks, calls))
-    }
-
-    fn assert_calls(p: &Path, expected: &[&str]) {
-        let mut content = String::default();
-        fs::File::open(p)
-            .unwrap()
-            .read_to_string(&mut content)
-            .unwrap();
-        for call in expected {
-            assert!(
-                content.contains(call),
-                format!(
-                    "uncompress did not call the expected: '{}'\nFull content:\n{}",
-                    call, content
-                )
-            );
+    loop {
+        match ffi::archive_read_data_block(archive_reader, &mut buffer, &mut size, &mut offset) {
+            ffi::ARCHIVE_EOF => return Ok(()),
+            ffi::ARCHIVE_OK => {
+                let content = slice::from_raw_parts(buffer as *const u8, size);
+                target.write_all(content)?;
+            }
+            _ => return Err(Error::from(archive_reader)),
         }
     }
+}
 
-    #[test]
-    fn uncompress_tar_gz() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "zcat"]).unwrap();
-        uncompress("test.tar.gz", &PathBuf::from("target"), Kind::TarGZip)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar.gz",
-                "zcat",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
+unsafe extern "C" fn libarchive_read_callback(
+    archive: *mut ffi::archive,
+    client_data: *mut c_void,
+    buffer: *mut *const c_void,
+) -> ffi::la_ssize_t {
+    let pipe = (client_data as *mut Pipe).as_mut().unwrap();
 
-    #[test]
-    fn uncompress_tar_bz2() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "bzcat"]).unwrap();
-        uncompress("test.tar.bz2", &PathBuf::from("target"), Kind::TarBZip2)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar.bz2",
-                "bzcat",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
+    *buffer = pipe.buffer.as_ptr() as *const c_void;
 
-    #[test]
-    fn uncompress_tar_xz() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "xzcat"]).unwrap();
-        uncompress("test.tar.xz", &PathBuf::from("target"), Kind::TarXz)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar.xz",
-                "xzcat",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
+    match pipe.reader.read(&mut pipe.buffer) {
+        Ok(size) => size as ffi::la_ssize_t,
+        Err(e) => {
+            let description = CString::new(e.to_string()).unwrap();
 
-    #[test]
-    fn uncompress_tar_lzma() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "lzcat"]).unwrap();
-        uncompress("test.tar.lzma", &PathBuf::from("target"), Kind::TarLZMA)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar.lzma",
-                "lzcat",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
+            ffi::archive_set_error(archive, e.raw_os_error().unwrap_or(0), description.as_ptr());
 
-    #[test]
-    fn uncompress_tar_lzip() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar", "lzip"]).unwrap();
-        uncompress("test.tar.lzip", &PathBuf::from("target"), Kind::TarLZip)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar.lzip",
-                "lzip -dc",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
-
-    #[test]
-    fn uncompress_tar() {
-        let (_dir_handle, calls) = create_echo_bins(&["cat", "tar"]).unwrap();
-        uncompress("test.tar", &PathBuf::from("target"), Kind::Tar)
-            .expect("Failed to uncompress file");
-        assert_calls(
-            &calls,
-            &[
-                "cat test.tar",
-                "tar --same-owner --preserve-permissions --xattrs -xC target",
-            ],
-        );
-    }
-
-    #[test]
-    fn uncompress_gz() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "zcat"]).unwrap();
-        uncompress("test.gz", &dir_handle.path().join("target"), Kind::GZip)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.gz", "zcat"]);
-    }
-
-    #[test]
-    fn uncompress_bz2() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "bzcat"]).unwrap();
-        uncompress("test.bz2", &dir_handle.path().join("target"), Kind::BZip2)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.bz2", "bzcat"]);
-    }
-
-    #[test]
-    fn uncompress_xz() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "xzcat"]).unwrap();
-        uncompress("test.xz", &dir_handle.path().join("target"), Kind::Xz)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.xz", "xzcat"]);
-    }
-
-    #[test]
-    fn uncompress_lzma() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "lzcat"]).unwrap();
-        uncompress("test.lzma", &dir_handle.path().join("target"), Kind::LZMA)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.lzma", "lzcat"]);
-    }
-
-    #[test]
-    fn uncompress_lzip() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "lzip"]).unwrap();
-        uncompress("test.lzip", &dir_handle.path().join("target"), Kind::LZip)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.lzip", "lzip -dc"]);
-    }
-
-    #[test]
-    fn uncompress_zip() {
-        let (dir_handle, calls) = create_echo_bins(&["cat", "unzip"]).unwrap();
-        uncompress("test.zip", &dir_handle.path().join("target"), Kind::Zip)
-            .expect("Failed to uncompress file");
-        assert_calls(&calls, &["cat test.zip", "unzip - -o -d"]);
+            -1
+        }
     }
 }
