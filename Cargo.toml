@@ -10,16 +10,18 @@ keywords = ["compression", "archive"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 edition = "2018"
-build = "build.rs"
+build = "src/build.rs"
 
 [badges]
 travis-ci = { repository = "OSSystems/compress-tools-rs" }
 
 [dependencies]
-pipers = "1"
-derive_more = "0.99"
+thiserror = "1"
+nix = "0.17.0"
+
+[build-dependencies]
+pkg-config = "0.3.17"
 
 [dev-dependencies]
-exitfailure = "0.5"
-structopt = "0.2"
-tempfile = "3"
+tempfile = "3.1.0"
+argh = "0.1.3"

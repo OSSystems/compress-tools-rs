@@ -4,10 +4,29 @@
 
 The library provides tools for handling compressed and archive files.
 
-## Examples
+## Examples Uncompress
+### Archive
 ```rust
-let dir = tempfile::tempdir().unwrap();
-uncompress("tests/fixtures/tree.tar.gz", dir.path(), Kind::TarGZip).unwrap();
+let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+uncompress_archive(&mut source, dir.path())?;
+```
+
+### Archive file
+```rust
+let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+let mut target = Vec::default();
+
+uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")?;
+```
+
+### File
+```rust
+let mut source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
+let mut target = Vec::default();
+
+uncompress_file(&mut source, &mut target)?;
 ```
 
 ## License
