@@ -19,9 +19,6 @@ pub enum Error {
     #[error("Utf error: '{0}'")]
     Utf(#[from] std::str::Utf8Error),
 
-    #[error("Try from int error: '{0}'")]
-    TryInt(#[from] std::num::TryFromIntError),
-
     #[error("Error to create the archive struct, is null")]
     ArchiveNull,
 
