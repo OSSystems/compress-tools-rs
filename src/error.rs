@@ -13,9 +13,6 @@ pub enum Error {
     #[error("Extraction error: '{0}'")]
     ExtractionError(String),
 
-    #[error("Nix error: '{0}'")]
-    Nix(#[from] nix::Error),
-
     #[error("Io error: '{0}'")]
     Io(#[from] std::io::Error),
 
