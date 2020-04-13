@@ -37,7 +37,19 @@ enum Mode {
 ///
 /// # Example
 ///
-/// uncompress_file(std::io::Read, std::io::Write)?;
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("file.txt.gz")?;
+/// let mut target = Vec::default();
+///
+/// uncompress_file(&mut source, &mut target)?;
+/// # Ok(())
+/// # }
+/// ```
+
 pub fn uncompress_file<R, W>(source: &mut R, target: &mut W) -> Result<()>
 where
     R: Read + 'static,
@@ -65,7 +77,19 @@ where
 ///
 /// # Example
 ///
-/// uncompress_archive(std::io::Read, &str)?;
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+/// use std::path::Path;
+///
+/// let mut source = File::open("tree.tar.gz")?;
+/// let dest = Path::new("/tmp/dest");
+///
+/// uncompress_archive(&mut source, &dest)?;
+/// # Ok(())
+/// # }
+/// ```
 pub fn uncompress_archive<R>(source: &mut R, dir_path: &Path) -> Result<()>
 where
     R: Read + 'static,
@@ -122,7 +146,18 @@ where
 ///
 /// # Example
 ///
-/// uncompress_archive_file(std::io::Read, std::io::Write, &str)?;
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar.gz")?;
+/// let mut target = Vec::default();
+///
+/// uncompress_archive_file(&mut source, &mut target, "file/path")?;
+/// # Ok(())
+/// # }
+/// ```
 pub fn uncompress_archive_file<R, W>(source: &mut R, target: &mut W, path: &str) -> Result<()>
 where
     R: Read + 'static,
