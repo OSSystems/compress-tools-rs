@@ -27,9 +27,6 @@ pub enum Error {
 
     #[error("File not found")]
     FileNotFound,
-
-    #[error("The end of file")]
-    EndOfFile,
 }
 
 pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<()> {
