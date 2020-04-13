@@ -71,7 +71,6 @@ enum Mode {
 /// # Ok(())
 /// # }
 /// ```
-
 pub fn uncompress_file<R, W>(source: &mut R, target: &mut W) -> Result<()>
 where
     R: Read + 'static,
