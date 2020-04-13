@@ -3,29 +3,29 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::ffi;
+use derive_more::{Display, Error, From};
 use std::ffi::CStr;
-use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Error, Debug)]
+#[derive(Display, From, Error, Debug)]
 pub enum Error {
-    #[error("Extraction error: '{0}'")]
-    ExtractionError(String),
+    #[display(fmt = "Extraction error: '{}'", _0)]
+    ExtractionError(#[error(not(source))] String),
 
-    #[error("Io error: '{0}'")]
-    Io(#[from] std::io::Error),
+    #[display(fmt = "Io error: '{}'", _0)]
+    Io(std::io::Error),
 
-    #[error("Utf error: '{0}'")]
-    Utf(#[from] std::str::Utf8Error),
+    #[display(fmt = "Utf error: '{}'", _0)]
+    Utf(std::str::Utf8Error),
 
-    #[error("Error to create the archive struct, is null")]
+    #[display(fmt = "Error to create the archive struct, is null")]
     ArchiveNull,
 
-    #[error("The entry is null, failed to set the pathname")]
+    #[display(fmt = "The entry is null, failed to set the pathname")]
     EntryNull,
 
-    #[error("File not found")]
+    #[display(fmt = "File not found")]
     FileNotFound,
 }
 
