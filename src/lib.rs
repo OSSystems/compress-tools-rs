@@ -54,12 +54,8 @@ enum Mode {
     WriteDisk,
 }
 
-/// Reads the input buffer and extract to another buffer.
-///
-/// # Arguments
-///
-/// * `source` - Reader.
-/// * `target` - Writer.
+/// Uncompress a file using the `source` need as reader and the `target` as a
+/// writter.
 ///
 /// # Example
 ///
@@ -94,12 +90,8 @@ where
     )
 }
 
-/// Reads the input buffer and extract to directory.
-///
-/// # Arguments
-///
-/// * `source` - Reader.
-/// * `path` - Path to extract the target buffer.
+/// Uncompress an archive using `source` as a reader and `dest` as the
+/// destionation directory.
 ///
 /// # Example
 ///
@@ -116,7 +108,7 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive<R>(source: &mut R, dir_path: &Path) -> Result<()>
+pub fn uncompress_archive<R>(source: &mut R, dest: &Path) -> Result<()>
 where
     R: Read + 'static,
 {
@@ -128,8 +120,8 @@ where
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
-                        let target_path = dir_path
-                            .join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
+                        let target_path =
+                            dest.join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
                         ffi::archive_entry_set_pathname(
                             entry,
                             CString::new(target_path.to_str().unwrap())
@@ -139,7 +131,7 @@ where
 
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
-                            let target_path = dir_path.join(CStr::from_ptr(link_name).to_str()?);
+                            let target_path = dest.join(CStr::from_ptr(link_name).to_str()?);
                             ffi::archive_entry_set_hardlink(
                                 entry,
                                 CString::new(target_path.to_str().unwrap())
@@ -162,13 +154,9 @@ where
     )
 }
 
-/// Reads the input buffer and extract a file to another buffer.
-///
-/// # Arguments
-///
-/// * `source` - Reader.
-/// * `target` - Writer.
-/// * `path` - File path to extract to the target.
+/// Uncompress a specific file from an archive. The `source` is used as a
+/// reader, the `target` as a writter and the `path` is the full path for the
+/// file to be extracted.
 ///
 /// # Example
 ///
