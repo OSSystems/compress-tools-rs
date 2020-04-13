@@ -1,29 +1,8 @@
 [![Build Status](https://travis-ci.org/OSSystems/compress-tools-rs.svg?branch=master)](https://travis-ci.org/OSSystems/compress-tools-rs) [![Documentation](https://docs.rs/compress-tools/badge.svg)](https://docs.rs/compress-tools)
 
-# compress-tools
+# {{crate}}
 
-The `compress-tools` crate aims to provide a conveinient and easy to use set
-of methods which builds on top of `libarchive` exposing a small set of it’s
-functionalities.
-
-This crate is capable of extracting:
-
-* compressed files
-* archive files
-* single file from an archive
-
-For example, to extract an archive file it is as simple as:
-
-```rust
-use compress_tools::*;
-use std::fs::File;
-use std::path::Path;
-
-let mut source = File::open("tree.tar.gz")?;
-let dest = Path::new("/tmp/dest");
-
-uncompress_archive(&mut source, &dest)?;
-```
+{{readme}}
 
 ## License
 
