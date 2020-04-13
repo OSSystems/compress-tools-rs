@@ -33,14 +33,15 @@ fn get_a_file_from_tar() {
 
 #[test]
 #[ignore]
-fn uncompress_to_dir() {
+fn uncompress_to_dir_preserve_owner() {
     use std::os::unix::fs::MetadataExt;
     use tempfile;
 
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
 
-    uncompress_archive(&mut source, dir.path()).expect("Failed to uncompress the file");
+    uncompress_archive(&mut source, dir.path(), Ownership::Preserve)
+        .expect("Failed to uncompress the file");
 
     assert_eq!(
         dir.path().join("tree/branch1/leaf").exists(),
@@ -82,7 +83,7 @@ fn uncompress_to_dir() {
 
 #[test]
 #[ignore]
-fn uncompress_same_file() {
+fn uncompress_same_file_preserve_owner() {
     use tempfile;
 
     uncompress_archive(
@@ -90,6 +91,7 @@ fn uncompress_same_file() {
         tempfile::TempDir::new()
             .expect("Failed to create the tmp directory")
             .path(),
+        Ownership::Preserve,
     )
     .expect("Failed to uncompress the file");
     uncompress_archive(
@@ -97,6 +99,80 @@ fn uncompress_same_file() {
         tempfile::TempDir::new()
             .expect("Failed to create the tmp directory")
             .path(),
+        Ownership::Preserve,
+    )
+    .expect("Failed to uncompress the file");
+}
+
+#[test]
+fn uncompress_to_dir_not_preserve_owner() {
+    use std::os::unix::fs::PermissionsExt;
+    use tempfile;
+
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
+        .expect("Failed to uncompress the file");
+
+    assert_eq!(
+        dir.path().join("tree/branch1/leaf").exists(),
+        true,
+        "the path doesn't exist"
+    );
+    assert_eq!(
+        dir.path().join("tree/branch2/leaf").exists(),
+        true,
+        "the path doesn't exist"
+    );
+    assert_eq!(
+        dir.path()
+            .join("tree/branch1/leaf")
+            .metadata()
+            .unwrap()
+            .permissions()
+            .mode()
+            % 0o1000,
+        0o664,
+        "the permissions did not match"
+    );
+    assert_eq!(
+        dir.path()
+            .join("tree/branch2/leaf")
+            .metadata()
+            .unwrap()
+            .permissions()
+            .mode()
+            % 0o1000,
+        0o664,
+        "the permissions did not match"
+    );
+
+    let contents = std::fs::read_to_string(dir.path().join("tree/branch2/leaf")).unwrap();
+    assert_eq!(
+        contents, "Goodbye World\n",
+        "Uncompressed file did not match"
+    );
+}
+
+#[test]
+fn uncompress_same_file_not_preserve_owner() {
+    use tempfile;
+
+    uncompress_archive(
+        &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
+        tempfile::TempDir::new()
+            .expect("Failed to create the tmp directory")
+            .path(),
+        Ownership::Ignore,
+    )
+    .expect("Failed to uncompress the file");
+    uncompress_archive(
+        &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
+        tempfile::TempDir::new()
+            .expect("Failed to create the tmp directory")
+            .path(),
+        Ownership::Ignore,
     )
     .expect("Failed to uncompress the file");
 }

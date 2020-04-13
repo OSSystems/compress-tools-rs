@@ -23,7 +23,7 @@
 //! let mut source = File::open("tree.tar.gz")?;
 //! let dest = Path::new("/tmp/dest");
 //!
-//! uncompress_archive(&mut source, &dest)?;
+//! uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
 //! # Ok(())
 //! # }
 //! ```
@@ -43,6 +43,15 @@ use std::{
 
 const READER_BUFFER_SIZE: usize = 1024;
 
+/// Determine the ownership behavior when unpacking the archive.
+pub enum Ownership {
+    /// Preserve the ownership of the files when uncompressing the archive
+    Preserve,
+    /// Ignore the ownership information of the files when uncompressing the
+    /// archive
+    Ignore,
+}
+
 struct Pipe<'a> {
     reader: &'a mut dyn Read,
     buffer: &'a mut [u8],
@@ -51,7 +60,7 @@ struct Pipe<'a> {
 enum Mode {
     AllFormat,
     RawFormat,
-    WriteDisk,
+    WriteDisk { ownership: Ownership },
 }
 
 /// Uncompress a file using the `source` need as reader and the `target` as a
@@ -103,16 +112,16 @@ where
 /// let mut source = File::open("tree.tar.gz")?;
 /// let dest = Path::new("/tmp/dest");
 ///
-/// uncompress_archive(&mut source, &dest)?;
+/// uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive<R>(source: &mut R, dest: &Path) -> Result<()>
+pub fn uncompress_archive<R>(source: &mut R, dest: &Path, ownership: Ownership) -> Result<()>
 where
     R: Read + 'static,
 {
     run_with_archive(
-        Mode::WriteDisk,
+        Mode::WriteDisk { ownership },
         source,
         |archive_reader, archive_writer, mut entry| unsafe {
             loop {
@@ -223,16 +232,19 @@ where
                 ffi::archive_read_support_format_all(archive_reader),
                 archive_reader,
             )?,
-            Mode::WriteDisk => {
-                let writer_flags = (ffi::ARCHIVE_EXTRACT_TIME
+            Mode::WriteDisk { ownership } => {
+                let mut writer_flags = ffi::ARCHIVE_EXTRACT_TIME
                     | ffi::ARCHIVE_EXTRACT_PERM
                     | ffi::ARCHIVE_EXTRACT_ACL
                     | ffi::ARCHIVE_EXTRACT_FFLAGS
-                    | ffi::ARCHIVE_EXTRACT_OWNER
-                    | ffi::ARCHIVE_EXTRACT_XATTR) as i32;
+                    | ffi::ARCHIVE_EXTRACT_XATTR;
+
+                if let Ownership::Preserve = ownership {
+                    writer_flags |= ffi::ARCHIVE_EXTRACT_OWNER;
+                };
 
                 archive_result(
-                    ffi::archive_write_disk_set_options(archive_writer, writer_flags),
+                    ffi::archive_write_disk_set_options(archive_writer, writer_flags as i32),
                     archive_writer,
                 )?;
                 archive_result(

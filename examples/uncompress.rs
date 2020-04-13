@@ -62,6 +62,10 @@ struct SubCommandUncompressArchive {
     /// target path
     #[argh(positional)]
     target_path: String,
+
+    /// whether or not to preserver ownership
+    #[argh(positional)]
+    preserve_ownership: bool,
 }
 
 fn main() -> compress_tools::Result<()> {
@@ -83,7 +87,15 @@ fn main() -> compress_tools::Result<()> {
         CmdLine::UncompressArchive(input) => {
             let mut source = std::fs::File::open(input.source_path)?;
 
-            uncompress_archive(&mut source, Path::new(&input.target_path))?;
+            uncompress_archive(
+                &mut source,
+                Path::new(&input.target_path),
+                if input.preserve_ownership {
+                    Ownership::Preserve
+                } else {
+                    Ownership::Ignore
+                },
+            )?;
         }
     }
 
