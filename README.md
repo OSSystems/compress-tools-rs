@@ -22,7 +22,7 @@ use std::path::Path;
 let mut source = File::open("tree.tar.gz")?;
 let dest = Path::new("/tmp/dest");
 
-uncompress_archive(&mut source, &dest)?;
+uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
 ```
 
 ## License
