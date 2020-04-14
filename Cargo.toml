@@ -1,6 +1,6 @@
 [package]
 name = "compress-tools"
-version = "0.3.1"
+version = "0.3.2-alpha.0"
 authors = ["Jonathas-Conceicao <jadoliveira@inf.ufpel.edu.br>"]
 description = "Utility functions for compressed and archive files handling"
 repository = "https://github.com/OSSystems/compress-tools-rs"
