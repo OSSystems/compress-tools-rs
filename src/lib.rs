@@ -154,8 +154,8 @@ where
 }
 
 /// Uncompress a specific file from an archive. The `source` is used as a
-/// reader, the `target` as a writer and the `path` is the full path for the
-/// file to be extracted.
+/// reader, the `target` as a writer and the `path` is the relative path for
+/// the file to be extracted from the archive.
 ///
 /// # Example
 ///
