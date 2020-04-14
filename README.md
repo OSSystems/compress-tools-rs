@@ -2,7 +2,7 @@
 
 # compress-tools
 
-The `compress-tools` crate aims to provide a conveinient and easy to use set
+The `compress-tools` crate aims to provide a convenient and easy to use set
 of methods which builds on top of `libarchive` exposing a small set of it’s
 functionalities.
 
