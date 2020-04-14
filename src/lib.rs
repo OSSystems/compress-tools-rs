@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! The `compress-tools` crate aims to provide a conveinient and easy to use set
+//! The `compress-tools` crate aims to provide a convenient and easy to use set
 //! of methods which builds on top of `libarchive` exposing a small set of it’s
 //! functionalities.
 //!
@@ -55,7 +55,7 @@ enum Mode {
 }
 
 /// Uncompress a file using the `source` need as reader and the `target` as a
-/// writter.
+/// writer.
 ///
 /// # Example
 ///
@@ -90,7 +90,7 @@ where
 }
 
 /// Uncompress an archive using `source` as a reader and `dest` as the
-/// destionation directory.
+/// destination directory.
 ///
 /// # Example
 ///
@@ -154,7 +154,7 @@ where
 }
 
 /// Uncompress a specific file from an archive. The `source` is used as a
-/// reader, the `target` as a writter and the `path` is the full path for the
+/// reader, the `target` as a writer and the `path` is the full path for the
 /// file to be extracted.
 ///
 /// # Example
