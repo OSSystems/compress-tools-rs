@@ -45,10 +45,10 @@ const READER_BUFFER_SIZE: usize = 1024;
 
 /// Determine the ownership behavior when unpacking the archive.
 pub enum Ownership {
-    /// Preserve the ownership of the files when uncompressing the archive
+    /// Preserve the ownership of the files when uncompressing the archive.
     Preserve,
     /// Ignore the ownership information of the files when uncompressing the
-    /// archive
+    /// archive.
     Ignore,
 }
 
