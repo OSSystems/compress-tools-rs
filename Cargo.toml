@@ -13,7 +13,7 @@ edition = "2018"
 build = "src/build.rs"
 
 [badges]
-travis-ci = { repository = "OSSystems/compress-tools-rs" }
+coveralls = { repository = "ossystems/compress-tools-rs" }
 
 [dependencies]
 derive_more = { version = "0.99.5", default-features = false, features = ["display", "from", "error"] }
