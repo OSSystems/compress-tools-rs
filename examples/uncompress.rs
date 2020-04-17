@@ -76,7 +76,7 @@ fn main() -> compress_tools::Result<()> {
             let mut source = std::fs::File::open(input.source_path)?;
             let mut target = std::fs::File::open(input.target_path)?;
 
-            uncompress_file(&mut source, &mut target)?;
+            uncompress_data(&mut source, &mut target)?;
         }
         CmdLine::UncompressArchiveFile(input) => {
             let mut source = std::fs::File::open(input.source_path)?;
