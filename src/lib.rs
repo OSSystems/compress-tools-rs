@@ -94,7 +94,7 @@ enum Mode {
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_file<R, W>(source: R, target: W) -> Result<()>
+pub fn uncompress_file<R, W>(source: R, target: W) -> Result<usize>
 where
     R: Read,
     W: Write,
@@ -194,7 +194,7 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive_file<R, W>(source: R, target: W, path: &str) -> Result<()>
+pub fn uncompress_archive_file<R, W>(source: R, target: W, path: &str) -> Result<usize>
 where
     R: Read,
     W: Write,
@@ -221,9 +221,9 @@ where
     )
 }
 
-fn run_with_archive<F, R>(mode: Mode, mut reader: R, f: F) -> Result<()>
+fn run_with_archive<F, R, T>(mode: Mode, mut reader: R, f: F) -> Result<T>
 where
-    F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<()>,
+    F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
     R: Read,
 {
     let archive_reader: *mut ffi::archive;
@@ -300,15 +300,16 @@ where
             archive_reader,
         )?;
 
-        f(archive_reader, archive_writer, archive_entry)?;
+        let res = f(archive_reader, archive_writer, archive_entry)?;
 
         archive_result(ffi::archive_read_close(archive_reader), archive_reader)?;
         archive_result(ffi::archive_read_free(archive_reader), archive_reader)?;
         archive_result(ffi::archive_write_close(archive_writer), archive_writer)?;
         archive_result(ffi::archive_write_free(archive_writer), archive_writer)?;
         ffi::archive_entry_free(archive_entry);
+
+        Ok(res)
     }
-    Ok(())
 }
 
 fn libarchive_copy_data(
@@ -339,20 +340,22 @@ fn libarchive_copy_data(
 unsafe fn libarchive_write_data_block<W>(
     archive_reader: *mut ffi::archive,
     mut target: W,
-) -> Result<()>
+) -> Result<usize>
 where
     W: Write,
 {
     let mut buffer = std::ptr::null();
     let mut offset = 0;
     let mut size = 0;
+    let mut written = 0;
 
     loop {
         match ffi::archive_read_data_block(archive_reader, &mut buffer, &mut size, &mut offset) {
-            ffi::ARCHIVE_EOF => return Ok(()),
+            ffi::ARCHIVE_EOF => return Ok(written),
             ffi::ARCHIVE_OK => {
                 let content = slice::from_raw_parts(buffer as *const u8, size);
                 target.write_all(content)?;
+                written += size;
             }
             _ => return Err(Error::from(archive_reader)),
         }

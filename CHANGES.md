@@ -2,6 +2,12 @@
 
 ## [TBD] TBD
 
+### Added
+
+* `uncompress_file` and `uncompress_archive_file`, on success, now return the ammount of bytes they have uncompressed [#16]
+
+[#16]: https://github.com/OSSystems/compress-tools-rs/pull/16
+
 ### Changed
 
 * More generic read/write api (should not be a breaking change) [#14]
