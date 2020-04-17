@@ -271,7 +271,7 @@ where
         }
 
         let mut pipe = Pipe {
-            reader: &mut Box::new(reader),
+            reader,
             buffer: &mut [0; READER_BUFFER_SIZE],
         };
 
