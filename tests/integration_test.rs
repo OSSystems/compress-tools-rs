@@ -9,7 +9,7 @@ fn get_compressed_file_content() {
     let mut source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
     let mut target = Vec::default();
 
-    let written = uncompress_file(&mut source, &mut target).expect("Failed to uncompress the file");
+    let written = uncompress_data(&mut source, &mut target).expect("Failed to uncompress the file");
     assert_eq!(
         String::from_utf8_lossy(&target),
         "some_file_content\n",

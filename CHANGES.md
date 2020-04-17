@@ -4,7 +4,7 @@
 
 ### Added
 
-* `uncompress_file` and `uncompress_archive_file`, on success, now return the ammount of bytes they have uncompressed [#16]
+* `uncompress_data` (previously `uncompress_file`) and `uncompress_archive_file`, on success, now return the ammount of bytes they have uncompressed [#16]
 
 [#16]: https://github.com/OSSystems/compress-tools-rs/pull/16
 
@@ -14,7 +14,10 @@
   * `Read` and `Write` arguments are no longer required to be a mutable reference,
     which allows for more tyes to be used, as `&mut [u8]`
 
+* Renamed `uncompress_file` function to `uncompress_data` [#17]
+
 [#14]: https://github.com/OSSystems/compress-tools-rs/pull/14
+[#17]: https://github.com/OSSystems/compress-tools-rs/pull/17
 
 ## [0.3.1] 2020-04-14
 

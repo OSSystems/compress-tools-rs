@@ -76,7 +76,7 @@ enum Mode {
 /// let mut source = File::open("file.txt.gz")?;
 /// let mut target = Vec::default();
 ///
-/// uncompress_file(&mut source, &mut target)?;
+/// uncompress_data(&mut source, &mut target)?;
 /// # Ok(())
 /// # }
 /// ```
@@ -90,11 +90,11 @@ enum Mode {
 /// let mut source = File::open("file.txt.gz")?;
 /// let mut target = [0 as u8;313];
 ///
-/// uncompress_file(&mut source, &mut target as &mut [u8])?;
+/// uncompress_data(&mut source, &mut target as &mut [u8])?;
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_file<R, W>(source: R, target: W) -> Result<usize>
+pub fn uncompress_data<R, W>(source: R, target: W) -> Result<usize>
 where
     R: Read,
     W: Write,
