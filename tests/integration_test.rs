@@ -9,12 +9,13 @@ fn get_compressed_file_content() {
     let mut source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
     let mut target = Vec::default();
 
-    uncompress_file(&mut source, &mut target).expect("Failed to uncompress the file");
+    let written = uncompress_file(&mut source, &mut target).expect("Failed to uncompress the file");
     assert_eq!(
         String::from_utf8_lossy(&target),
         "some_file_content\n",
         "Uncompressed file did not match",
     );
+    assert_eq!(written, 18, "Uncompressed bytes count did not match");
 }
 
 #[test]
@@ -22,13 +23,14 @@ fn get_a_file_from_tar() {
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
     let mut target = Vec::default();
 
-    uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+    let written = uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
         .expect("Failed to get the file");
     assert_eq!(
         String::from_utf8_lossy(&target),
         "Goodbye World\n",
         "Uncompressed file did not match",
     );
+    assert_eq!(written, 14, "Uncompressed bytes count did not match");
 }
 
 #[test]
