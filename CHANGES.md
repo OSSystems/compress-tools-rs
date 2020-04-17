@@ -2,6 +2,8 @@
 
 ## [TBD] TBD
 
+## [0.4.0] 2020-04-17
+
 ### Added
 
 * `uncompress_data` (previously `uncompress_file`) and `uncompress_archive_file`, on success, now return the ammount of bytes they have uncompressed [#16]
