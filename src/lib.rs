@@ -80,9 +80,23 @@ enum Mode {
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_file<R, W>(source: &mut R, target: &mut W) -> Result<()>
+///
+/// Slices can be used if you know the exact length of the uncompressed data.
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("file.txt.gz")?;
+/// let mut target = [0 as u8;313];
+///
+/// uncompress_file(&mut source, &mut target as &mut [u8])?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn uncompress_file<R, W>(source: R, target: W) -> Result<()>
 where
-    R: Read + 'static,
+    R: Read,
     W: Write,
 {
     run_with_archive(
@@ -116,9 +130,9 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive<R>(source: &mut R, dest: &Path, ownership: Ownership) -> Result<()>
+pub fn uncompress_archive<R>(source: R, dest: &Path, ownership: Ownership) -> Result<()>
 where
-    R: Read + 'static,
+    R: Read,
 {
     run_with_archive(
         Mode::WriteDisk { ownership },
@@ -180,9 +194,9 @@ where
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive_file<R, W>(source: &mut R, target: &mut W, path: &str) -> Result<()>
+pub fn uncompress_archive_file<R, W>(source: R, target: W, path: &str) -> Result<()>
 where
-    R: Read + 'static,
+    R: Read,
     W: Write,
 {
     run_with_archive(
@@ -207,10 +221,10 @@ where
     )
 }
 
-fn run_with_archive<F, R>(mode: Mode, reader: &mut R, f: F) -> Result<()>
+fn run_with_archive<F, R>(mode: Mode, mut reader: R, f: F) -> Result<()>
 where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<()>,
-    R: Read + 'static,
+    R: Read,
 {
     let archive_reader: *mut ffi::archive;
     let archive_writer: *mut ffi::archive;
@@ -271,7 +285,7 @@ where
         }
 
         let mut pipe = Pipe {
-            reader,
+            reader: &mut reader,
             buffer: &mut [0; READER_BUFFER_SIZE],
         };
 
@@ -324,7 +338,7 @@ fn libarchive_copy_data(
 
 unsafe fn libarchive_write_data_block<W>(
     archive_reader: *mut ffi::archive,
-    target: &mut W,
+    mut target: W,
 ) -> Result<()>
 where
     W: Write,
