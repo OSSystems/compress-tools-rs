@@ -6,6 +6,24 @@
 //! of methods which builds on top of `libarchive` exposing a small set of it’s
 //! functionalities.
 //!
+//! | Platform | Build Status |
+//! | -------- | ------------ |
+//! | Linux | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(Linux)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | macOS | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(macOS)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | Windows | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(Windows)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//!
+//! ---
+//!
+//! ## Dependencies
+//!
+//! You must have `libarchive` proprely installed on your system in order to use
+//! this. If building on *nix systems, `pkg-config` is used to locate the
+//! `libarchive`; on Windows `vcpkg` will be used to locating the `libarchive`.
+//!
+//! The minimum supported Rust version is 1.38.
+//!
+//! ## Features
+//!
 //! This crate is capable of extracting:
 //!
 //! * compressed files
