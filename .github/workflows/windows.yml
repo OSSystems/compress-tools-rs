@@ -1,0 +1,85 @@
+name: CI (Windows)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build_and_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 1.38.0 # MSRV
+          - stable
+          - nightly
+
+    name: Test ${{ matrix.version }} - x86_64-pc-windows-msvc
+    runs-on: windows-latest
+
+    steps:
+      - name: Cache Dependencies
+        id: cache-vcpkg
+        uses: actions/cache@v1
+        with:
+          path: C:/vcpkg/installed
+          key: vcpkg-installed-cache
+      - name: Install Dependencies
+        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
+        run: |
+          vcpkg install libarchive --triplet x64-windows
+          vcpkg integrate install
+      - name: Export vcpkg build vars
+        shell: powershell
+        run: |
+          echo $Env:VCPKG_INSTALLATION_ROOT
+          echo "::set-env name=VCPKG_ROOT::$Env:VCPKG_INSTALLATION_ROOT"
+          echo "::set-env name=VCPKGRS_DYNAMIC::1"
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install ${{ matrix.version }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.version }}-x86_64-pc-windows-msvc
+          profile: minimal
+          override: true
+
+      - name: Generate Cargo.lock
+        uses: actions-rs/cargo@v1
+        with:
+          command: generate-lockfile
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-registry-trimmed-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-index-trimmed-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --release --all --bins --examples --tests
+
+      - name: Tests
+        uses: actions-rs/cargo@v1
+        timeout-minutes: 10
+        with:
+          command: test
+          args: --release --all --all-features --no-fail-fast -- --nocapture
+
+      - name: Clear the cargo caches
+        run: |
+          cargo install cargo-cache --no-default-features --features ci-autoclean
+          cargo-cache
