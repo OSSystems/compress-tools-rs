@@ -38,7 +38,6 @@ fn get_a_file_from_tar() {
 #[cfg(unix)]
 fn uncompress_to_dir_preserve_owner() {
     use std::os::unix::fs::MetadataExt;
-    use tempfile;
 
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
@@ -87,8 +86,6 @@ fn uncompress_to_dir_preserve_owner() {
 #[test]
 #[ignore]
 fn uncompress_same_file_preserve_owner() {
-    use tempfile;
-
     uncompress_archive(
         &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
         tempfile::TempDir::new()
@@ -111,7 +108,6 @@ fn uncompress_same_file_preserve_owner() {
 #[cfg(unix)]
 fn uncompress_to_dir_not_preserve_owner() {
     use std::os::unix::fs::PermissionsExt;
-    use tempfile;
 
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
@@ -161,8 +157,6 @@ fn uncompress_to_dir_not_preserve_owner() {
 
 #[test]
 fn uncompress_same_file_not_preserve_owner() {
-    use tempfile;
-
     uncompress_archive(
         &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
         tempfile::TempDir::new()
