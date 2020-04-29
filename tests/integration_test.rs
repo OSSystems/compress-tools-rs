@@ -35,6 +35,7 @@ fn get_a_file_from_tar() {
 
 #[test]
 #[ignore]
+#[cfg(unix)]
 fn uncompress_to_dir_preserve_owner() {
     use std::os::unix::fs::MetadataExt;
     use tempfile;
@@ -107,6 +108,7 @@ fn uncompress_same_file_preserve_owner() {
 }
 
 #[test]
+#[cfg(unix)]
 fn uncompress_to_dir_not_preserve_owner() {
     use std::os::unix::fs::PermissionsExt;
     use tempfile;
