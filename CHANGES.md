@@ -2,6 +2,14 @@
 
 ## [TBD] TBD
 
+## [0.5.0] 2020-04-30
+
+### Added
+
+* Support for windows build through `vcpkg` [#19]
+
+[#19]: https://github.com/OSSystems/compress-tools-rs/pull/16
+
 ## [0.4.0] 2020-04-17
 
 ### Added
