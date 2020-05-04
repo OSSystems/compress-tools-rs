@@ -88,6 +88,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ steps.coverage.outputs.report }}
+      - name: Clear the coverage files from cache
+        if: matrix.version == 'nightly'
+        run: |
+          find target/ -name "*.gcda" -exec rm {} +
 
       - name: Clear the cargo caches
         run: |
