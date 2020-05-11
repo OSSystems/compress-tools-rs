@@ -7,7 +7,7 @@ fn main() {
 #[cfg(not(windows))]
 fn find_libarchive() -> bool {
     pkg_config::Config::new()
-        .atleast_version("3.2.2")
+        .atleast_version("3")
         .probe("libarchive")
         .is_ok()
 }
