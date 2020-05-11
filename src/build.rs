@@ -1,18 +1,18 @@
 fn main() {
-    if !find_libarchive() {
-        panic!("Unable to find libarchive");
-    }
+    find_libarchive()
 }
 
 #[cfg(not(windows))]
-fn find_libarchive() -> bool {
+fn find_libarchive() {
     pkg_config::Config::new()
         .atleast_version("3")
         .probe("libarchive")
-        .is_ok()
+        .expect("Unable to find libarchive");
 }
 
 #[cfg(windows)]
-fn find_libarchive() -> bool {
-    vcpkg::Config::new().find_package("libarchive").is_ok()
+fn find_libarchive() {
+    vcpkg::Config::new()
+        .find_package("libarchive")
+        .expect("Unable to find libarchive");
 }
