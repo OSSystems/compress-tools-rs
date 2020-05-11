@@ -1,0 +1,6 @@
+FROM rustembedded/cross:armv7-unknown-linux-gnueabihf
+RUN dpkg --add-architecture armhf
+RUN apt-get update
+RUN apt-get install --assume-yes --no-install-recommends libarchive-dev:armhf
+
+ENV PKG_CONFIG=arm-linux-gnueabihf-pkg-config

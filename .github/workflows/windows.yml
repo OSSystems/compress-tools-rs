@@ -1,4 +1,4 @@
-name: CI (Windows)
+name: CI - Windows - x86_64
 
 on:
   push:
