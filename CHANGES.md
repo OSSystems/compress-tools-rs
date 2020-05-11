@@ -10,6 +10,12 @@
 
 [#19]: https://github.com/OSSystems/compress-tools-rs/pull/16
 
+### Changed
+
+* Lower required version of libarchive to 3 instead of 3.2.2 [#21]
+
+[#21]: https://github.com/OSSystems/compress-tools-rs/pull/21
+
 ## [0.4.0] 2020-04-17
 
 ### Added
