@@ -8,9 +8,11 @@
 //!
 //! | Platform | Build Status |
 //! | -------- | ------------ |
-//! | Linux | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(Linux)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
-//! | macOS | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(macOS)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
-//! | Windows | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20(Windows)/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | Linux - x86_64 | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20-%20Linux%20-%20x86_64/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | Linux - AArch64 | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20-%20Linux%20-%20AArch64/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | Linux - ARMv7 | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20-%20Linux%20-%20ARMv7/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | macOS - x86_64 | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20-%20macOS%20-%20x86_64/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
+//! | Windows - x86_64 | [![build status](https://github.com/OSSystems/compress-tools-rs/workflows/CI%20-%20Windows%20-%20x86_64/badge.svg)](https://github.com/OSSystems/compress-tools-rs/actions) |
 //!
 //! ---
 //!
