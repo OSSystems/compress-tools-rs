@@ -8,7 +8,7 @@
 
 * Support for windows build through `vcpkg` [#19]
 
-[#19]: https://github.com/OSSystems/compress-tools-rs/pull/16
+[#19]: https://github.com/OSSystems/compress-tools-rs/pull/19
 
 ### Changed
 
