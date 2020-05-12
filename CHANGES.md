@@ -2,6 +2,14 @@
 
 ## [TBD] TBD
 
+## [0.5.1] 2020-05-12
+
+### Changed
+
+* Lower required version of libarchive to 3 instead of 3.2.2 [#21]
+
+[#21]: https://github.com/OSSystems/compress-tools-rs/pull/21
+
 ## [0.5.0] 2020-04-30
 
 ### Added
@@ -9,12 +17,6 @@
 * Support for windows build through `vcpkg` [#19]
 
 [#19]: https://github.com/OSSystems/compress-tools-rs/pull/19
-
-### Changed
-
-* Lower required version of libarchive to 3 instead of 3.2.2 [#21]
-
-[#21]: https://github.com/OSSystems/compress-tools-rs/pull/21
 
 ## [0.4.0] 2020-04-17
 
