@@ -2,9 +2,15 @@
 
 ## [TBD] TBD
 
+### Added
+
+* `list_archive_file` allow for getting the list of files included in an archive. [#22]
+
 ### Changed
 
 * Change MSRV to 1.40.0
+
+[#22]: https://github.com/OSSystems/compress-tools-rs/issues/22
 
 ## [0.5.1] 2020-05-12
 

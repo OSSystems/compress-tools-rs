@@ -83,6 +83,46 @@ enum Mode {
     WriteDisk { ownership: Ownership },
 }
 
+/// Get all files in a archive using `source` as a reader.
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar")?;
+///
+/// let file_list = list_archive_files(&mut source)?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn list_archive_files<R>(source: R) -> Result<Vec<String>>
+where
+    R: Read,
+{
+    run_with_archive(
+        Mode::AllFormat,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            let mut file_list = Vec::new();
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_OK => {
+                        file_list.push(
+                            CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                                .to_str()?
+                                .to_string(),
+                        );
+                    }
+                    ffi::ARCHIVE_EOF => return Ok(file_list),
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+        },
+    )
+}
+
 /// Uncompress a file using the `source` need as reader and the `target` as a
 /// writer.
 ///
