@@ -16,6 +16,7 @@ struct TopLevel {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand)]
 enum CmdLine {
+    ListArchiveFiles(SubCommandListArchiveFiles),
     UncompressData(SubCommandUncompressData),
     UncompressArchiveFile(SubCommandUncompressArchiveFile),
     UncompressArchive(SubCommandUncompressArchive),
@@ -68,10 +69,26 @@ struct SubCommandUncompressArchive {
     preserve_ownership: bool,
 }
 
+#[derive(FromArgs, PartialEq, Debug)]
+/// List archive files subcommand.
+#[argh(subcommand, name = "list-archive-files")]
+struct SubCommandListArchiveFiles {
+    /// source path
+    #[argh(positional)]
+    source_path: String,
+}
+
 fn main() -> compress_tools::Result<()> {
     let cmd: TopLevel = argh::from_env();
 
     match cmd.nested {
+        CmdLine::ListArchiveFiles(input) => {
+            let filename = std::fs::File::open(input.source_path)?;
+
+            let file_list = list_archive_files(filename)?;
+            println!("{:#?}", file_list);
+        }
+
         CmdLine::UncompressData(input) => {
             let mut source = std::fs::File::open(input.source_path)?;
             let mut target = std::fs::File::open(input.target_path)?;

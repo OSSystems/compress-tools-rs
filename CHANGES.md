@@ -2,6 +2,10 @@
 
 ## [TBD] TBD
 
+### Added
+
+* `list_archive_file` allow for getting the list of files included in an archive. [#23]
+
 ### Changed
 
 * Change MSRV to 1.40.0
