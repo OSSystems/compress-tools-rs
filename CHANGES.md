@@ -2,6 +2,10 @@
 
 ## [TBD] TBD
 
+### Changed
+
+* Change MSRV to 1.40.0
+
 ## [0.5.1] 2020-05-12
 
 ### Changed
