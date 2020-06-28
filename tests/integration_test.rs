@@ -34,6 +34,23 @@ fn get_a_file_from_tar() {
 }
 
 #[test]
+fn successfully_list_archive_files() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    assert_eq!(
+        list_archive_files(source).unwrap(),
+        vec![
+            "tree/".to_string(),
+            "tree/branch1/".to_string(),
+            "tree/branch1/leaf".to_string(),
+            "tree/branch2/".to_string(),
+            "tree/branch2/leaf".to_string(),
+        ],
+        "file list inside the archive did not match"
+    );
+}
+
+#[test]
 #[ignore]
 #[cfg(unix)]
 fn uncompress_to_dir_preserve_owner() {
