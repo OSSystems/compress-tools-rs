@@ -337,11 +337,11 @@ where
         }
 
         if archive_reader.is_null() {
-            return Err(Error::ArchiveNull);
+            return Err(Error::NullArchive);
         }
 
         if archive_writer.is_null() {
-            return Err(Error::ArchiveNull);
+            return Err(Error::NullArchive);
         }
 
         let mut pipe = Pipe {

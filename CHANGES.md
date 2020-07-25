@@ -8,7 +8,12 @@
 
 ### Changed
 
-*
+* Change error enum names to more meaninful ones. The following errors were
+  renamed as:
+
+  - `ExtractionError` to `Extract`
+  - `ArchiveNull` to `NullArchive`
+  - `EntryNull` to `NullEntry`
 
 ## [0.6.0] 2020-06-28
 

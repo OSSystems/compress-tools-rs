@@ -11,7 +11,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Display, From, Error, Debug)]
 pub enum Error {
     #[display(fmt = "Extraction error: '{}'", _0)]
-    ExtractionError(#[error(not(source))] String),
+    Extract(#[error(not(source))] String),
 
     #[display(fmt = "Io error: '{}'", _0)]
     Io(std::io::Error),
@@ -20,10 +20,10 @@ pub enum Error {
     Utf(std::str::Utf8Error),
 
     #[display(fmt = "Error to create the archive struct, is null")]
-    ArchiveNull,
+    NullArchive,
 
     #[display(fmt = "The entry is null, failed to set the pathname")]
-    EntryNull,
+    NullEntry,
 
     #[display(fmt = "File not found")]
     FileNotFound,
@@ -42,7 +42,7 @@ impl From<*mut ffi::archive> for Error {
     fn from(input: *mut ffi::archive) -> Self {
         unsafe {
             let input = ffi::archive_error_string(input);
-            Error::ExtractionError(CStr::from_ptr(input).to_string_lossy().to_string())
+            Error::Extract(CStr::from_ptr(input).to_string_lossy().to_string())
         }
     }
 }
