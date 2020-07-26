@@ -4,7 +4,7 @@
 
 ### Added
 
-*
+* Asynchronous support
 
 ### Changed
 

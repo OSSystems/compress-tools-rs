@@ -17,10 +17,16 @@ coveralls = { repository = "ossystems/compress-tools-rs" }
 
 [dependencies]
 derive_more = { version = "0.99", default-features = false, features = ["display", "from", "error"] }
+futures = { version = "0.3.5", optional = true }
+tokio = { version = "0.2.22", optional = true }
+
+[features]
+async = ["futures", "tokio"]
 
 [dev-dependencies]
 tempfile = "3.1"
 argh = "0.1"
+tokio = { version = "0.2.22", features = ["macros", "fs"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 vcpkg = "0.2"

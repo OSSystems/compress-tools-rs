@@ -48,6 +48,8 @@
 //! # }
 //! ```
 
+#[cfg(feature = "async")]
+pub mod asynchronous;
 mod error;
 mod ffi;
 

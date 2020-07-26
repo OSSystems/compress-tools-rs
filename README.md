@@ -46,6 +46,20 @@ let dest = Path::new("/tmp/dest");
 uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
 ```
 
+Also, this crate can be used in async code. It requires to enable the `async` feature.
+
+As an example, this code extracts file into Vec from an archive in async environment:
+```rust
+
+use compress_tools::asynchronous::*;
+use tokio::fs::File;
+
+let mut source = File::open("test.tar.gz").await?;
+let mut target = Vec::default();
+
+uncompress_archive_file(&mut source, &mut target, "test.txt").await?;
+```
+
 ## License
 
 Licensed under either of

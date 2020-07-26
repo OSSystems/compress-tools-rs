@@ -27,6 +27,9 @@ pub enum Error {
 
     #[display(fmt = "File not found")]
     FileNotFound,
+
+    #[display(fmt = "Disk access not supported in async environment")]
+    AsyncDiskAccessNotSupported,
 }
 
 pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<()> {
