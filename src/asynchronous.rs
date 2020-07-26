@@ -238,7 +238,6 @@ unsafe extern "C" fn libarchive_read_callback(
     futures::executor::block_on(libarchive_read_callback_async(archive, client_data, buffer))
 }
 
-#[cfg(feature = "futures")]
 async unsafe extern "C" fn libarchive_read_callback_async(
     archive: *mut ffi::archive,
     client_data: *mut c_void,
