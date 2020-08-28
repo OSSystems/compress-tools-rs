@@ -15,6 +15,8 @@
   - `ArchiveNull` to `NullArchive`
   - `EntryNull` to `NullEntry`
 
+* Change MSRV to 1.42.0
+
 ## [0.6.0] 2020-06-28
 
 ### Added
