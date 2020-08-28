@@ -91,13 +91,13 @@ fn main() -> compress_tools::Result<()> {
 
         CmdLine::UncompressData(input) => {
             let mut source = std::fs::File::open(input.source_path)?;
-            let mut target = std::fs::File::open(input.target_path)?;
+            let mut target = std::fs::File::create(input.target_path)?;
 
             uncompress_data(&mut source, &mut target)?;
         }
         CmdLine::UncompressArchiveFile(input) => {
             let mut source = std::fs::File::open(input.source_path)?;
-            let mut target = std::fs::File::open(input.target_path)?;
+            let mut target = std::fs::File::create(input.target_path)?;
 
             uncompress_archive_file(&mut source, &mut target, &input.target_file)?;
         }
