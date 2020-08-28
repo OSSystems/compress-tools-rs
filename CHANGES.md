@@ -11,7 +11,7 @@
 * Change error enum names to more meaninful ones. The following errors were
   renamed as:
 
-  - `ExtractionError` to `Extract`
+  - `ExtractionError` to `Extraction`
   - `ArchiveNull` to `NullArchive`
   - `EntryNull` to `NullEntry`
 

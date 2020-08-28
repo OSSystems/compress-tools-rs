@@ -11,7 +11,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Display, From, Error, Debug)]
 pub enum Error {
     #[display(fmt = "Extraction error: '{}'", _0)]
-    Extract(#[error(not(source))] String),
+    Extraction(#[error(not(source))] String),
 
     #[display(fmt = "Io error: '{}'", _0)]
     Io(std::io::Error),
@@ -42,7 +42,7 @@ impl From<*mut ffi::archive> for Error {
     fn from(input: *mut ffi::archive) -> Self {
         unsafe {
             let input = ffi::archive_error_string(input);
-            Error::Extract(CStr::from_ptr(input).to_string_lossy().to_string())
+            Error::Extraction(CStr::from_ptr(input).to_string_lossy().to_string())
         }
     }
 }
