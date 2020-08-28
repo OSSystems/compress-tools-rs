@@ -121,6 +121,9 @@ extern "C" {
     pub fn archive_write_disk_set_standard_lookup(arg1: *mut archive) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    pub fn archive_errno(arg1: *mut archive) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn archive_error_string(arg1: *mut archive) -> *const ::std::os::raw::c_char;
 }
 extern "C" {

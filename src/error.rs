@@ -9,6 +9,7 @@ use std::ffi::CStr;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Display, From, Error, Debug)]
+#[non_exhaustive]
 pub enum Error {
     #[display(fmt = "Extraction error: '{}'", _0)]
     Extraction(#[error(not(source))] String),
@@ -27,6 +28,9 @@ pub enum Error {
 
     #[display(fmt = "File not found")]
     FileNotFound,
+
+    #[display(fmt = "Unknown error")]
+    Unknown,
 }
 
 pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<()> {
@@ -41,8 +45,15 @@ pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<(
 impl From<*mut ffi::archive> for Error {
     fn from(input: *mut ffi::archive) -> Self {
         unsafe {
-            let input = ffi::archive_error_string(input);
-            Error::Extraction(CStr::from_ptr(input).to_string_lossy().to_string())
+            let error_string = ffi::archive_error_string(input);
+            let errno = ffi::archive_errno(input);
+            if !error_string.is_null() {
+                Error::Extraction(CStr::from_ptr(error_string).to_string_lossy().to_string())
+            } else if errno != 0 {
+                std::io::Error::from_raw_os_error(errno).into()
+            } else {
+                Error::Unknown
+            }
         }
     }
 }

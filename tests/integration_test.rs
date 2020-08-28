@@ -191,3 +191,14 @@ fn uncompress_same_file_not_preserve_owner() {
     )
     .expect("Failed to uncompress the file");
 }
+
+#[test]
+fn uncompress_truncated_archive() {
+    assert!(matches!(
+        uncompress_data(
+            std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap(),
+            Vec::new()
+        ),
+        Err(Error::Unknown)
+    ));
+}

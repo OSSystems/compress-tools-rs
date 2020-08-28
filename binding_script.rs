@@ -62,6 +62,7 @@ fn main() {
         .whitelist_function("archive_entry_hardlink")
         .whitelist_function("archive_set_error")
         .whitelist_function("archive_error_string")
+        .whitelist_function("archive_errno")
         .generate()
         .expect("Unable to generate bindings");
 
