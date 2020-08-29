@@ -4,7 +4,7 @@
 
 ### Added
 
-*
+* Uncompress service example
 
 ### Changed
 
