@@ -341,11 +341,7 @@ where
             }
         }
 
-        if archive_reader.is_null() {
-            return Err(Error::NullArchive);
-        }
-
-        if archive_writer.is_null() {
+        if archive_reader.is_null() || archive_writer.is_null() {
             return Err(Error::NullArchive);
         }
 
