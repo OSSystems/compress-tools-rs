@@ -292,17 +292,16 @@ where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
     R: Read,
 {
-    let archive_reader: *mut ffi::archive;
-    let archive_writer: *mut ffi::archive;
-    let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
-
     unsafe {
-        archive_reader = ffi::archive_read_new();
-        archive_writer = ffi::archive_write_disk_new();
+        let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
+        let archive_reader = ffi::archive_read_new();
+        let archive_writer = ffi::archive_write_disk_new();
+
         archive_result(
             ffi::archive_read_support_filter_all(archive_reader),
             archive_reader,
         )?;
+
         match mode {
             Mode::RawFormat => archive_result(
                 ffi::archive_read_support_format_raw(archive_reader),
