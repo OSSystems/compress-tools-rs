@@ -6,6 +6,10 @@
 
 * Uncompress service example
 
+### Removed
+
+* Removed `Error::NullEntry` as it is unused.
+
 ### Changed
 
 * Replaced `Error::FileNotFound` with `std::io::Error` using the
