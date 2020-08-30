@@ -14,10 +14,10 @@ pub enum Error {
     #[display(fmt = "Extraction error: '{}'", _0)]
     Extraction(#[error(not(source))] String),
 
-    #[display(fmt = "Io error: '{}'", _0)]
-    Io(std::io::Error),
+    #[display(transparent)]
+    Io(io::Error),
 
-    #[display(fmt = "Utf error: '{}'", _0)]
+    #[display(transparent)]
     Utf(std::str::Utf8Error),
 
     #[display(fmt = "Error to create the archive struct, is null")]
