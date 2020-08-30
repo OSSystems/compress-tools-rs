@@ -26,9 +26,6 @@ pub enum Error {
     #[display(fmt = "The entry is null, failed to set the pathname")]
     NullEntry,
 
-    #[display(fmt = "File not found")]
-    FileNotFound,
-
     #[display(fmt = "Unknown error")]
     Unknown,
 }

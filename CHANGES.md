@@ -8,6 +8,9 @@
 
 ### Changed
 
+* Replaced `Error::FileNotFound` with `std::io::Error` using the
+  `std::io::ErrorKind::NotFound`.
+
 * Change error enum names to more meaninful ones. The following errors were
   renamed as:
 

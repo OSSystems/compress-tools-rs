@@ -55,7 +55,7 @@ use error::archive_result;
 pub use error::{Error, Result};
 use std::{
     ffi::{CStr, CString},
-    io::{Read, Write},
+    io::{self, Read, Write},
     os::raw::c_void,
     path::Path,
     slice,
@@ -272,7 +272,13 @@ where
                             break;
                         }
                     }
-                    ffi::ARCHIVE_EOF => return Err(Error::FileNotFound),
+                    ffi::ARCHIVE_EOF => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::NotFound,
+                            format!("path {} doesn't exist inside archive", path),
+                        )
+                        .into())
+                    }
                     _ => return Err(Error::from(archive_reader)),
                 }
             }
