@@ -23,9 +23,6 @@ pub enum Error {
     #[display(fmt = "Error to create the archive struct, is null")]
     NullArchive,
 
-    #[display(fmt = "The entry is null, failed to set the pathname")]
-    NullEntry,
-
     #[display(fmt = "Unknown error")]
     Unknown,
 }
