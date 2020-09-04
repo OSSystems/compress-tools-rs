@@ -52,6 +52,8 @@
 pub mod async_support;
 mod error;
 mod ffi;
+#[cfg(feature = "futures_support")]
+pub mod futures_support;
 
 use error::archive_result;
 pub use error::{Error, Result};
