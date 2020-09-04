@@ -48,6 +48,8 @@
 //! # }
 //! ```
 
+#[cfg(feature = "async_support")]
+pub mod async_support;
 mod error;
 mod ffi;
 
@@ -148,7 +150,7 @@ where
 /// use std::fs::File;
 ///
 /// let mut source = File::open("file.txt.gz")?;
-/// let mut target = [0 as u8;313];
+/// let mut target = [0 as u8; 313];
 ///
 /// uncompress_data(&mut source, &mut target as &mut [u8])?;
 /// # Ok(())
