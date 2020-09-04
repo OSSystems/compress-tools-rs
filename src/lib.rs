@@ -54,6 +54,8 @@ mod error;
 mod ffi;
 #[cfg(feature = "futures_support")]
 pub mod futures_support;
+#[cfg(feature = "tokio_support")]
+pub mod tokio_support;
 
 use error::archive_result;
 pub use error::{Error, Result};
