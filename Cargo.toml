@@ -43,3 +43,11 @@ vcpkg = "0.2"
 
 [target.'cfg(not(target_os = "windows"))'.build-dependencies]
 pkg-config = "0.3"
+
+[[example]]
+name = "uncompress_service_futures"
+required-features = ["futures_support"]
+
+[[example]]
+name = "uncompress_service_tokio"
+required-features = ["tokio_support"]
