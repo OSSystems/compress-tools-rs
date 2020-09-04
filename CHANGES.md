@@ -4,7 +4,8 @@
 
 ### Added
 
-* Uncompress service example
+* Optional async support
+* Uncompress service example and its async-std and Tokio counterparts
 
 ### Removed
 
