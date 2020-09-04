@@ -24,15 +24,19 @@ futures-io = { version = "0.3.5", optional = true }
 futures-util = { version = "0.3.5", features = ["sink", "io"], optional = true }
 futures-executor = { version = "0.3.5", optional = true }
 blocking = { version = "0.6.1", optional = true }
+tokio = { version = "0.2.22", features = ["blocking", "macros"], optional = true }
+tokio-util = { version = "0.3.1", features = ["compat"], optional = true }
 
 [features]
 async_support = ["async-trait", "futures-channel", "futures-core", "futures-io", "futures-util", "futures-executor"]
 futures_support = ["async_support", "blocking"]
+tokio_support = ["async_support", "tokio", "tokio-util"]
 
 [dev-dependencies]
 tempfile = "3.1"
 argh = "0.1"
 async-std = { version = "1.6.3", features = ["attributes"] }
+tokio = { version = "0.2.22", features = ["fs", "net"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 vcpkg = "0.2"

@@ -20,6 +20,10 @@ pub enum Error {
     #[display(transparent)]
     Utf(std::str::Utf8Error),
 
+    #[cfg(feature = "tokio_support")]
+    #[display(transparent)]
+    JoinError(tokio::task::JoinError),
+
     #[display(fmt = "Error to create the archive struct, is null")]
     NullArchive,
 
