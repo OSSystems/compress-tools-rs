@@ -1,6 +1,8 @@
 # CHANGES
 
-## [TBD] TDB
+<!-- next-header -->
+
+## [Unreleased] - ReleaseDate
 
 ### Added
 
@@ -25,7 +27,7 @@
 
 * Change MSRV to 1.42.0
 
-## [0.6.0] 2020-06-28
+## [0.6.0] - 2020-06-28
 
 ### Added
 
@@ -37,7 +39,7 @@
 
 [#22]: https://github.com/OSSystems/compress-tools-rs/issues/22
 
-## [0.5.1] 2020-05-12
+## [0.5.1] - 2020-05-12
 
 ### Changed
 
@@ -45,7 +47,7 @@
 
 [#21]: https://github.com/OSSystems/compress-tools-rs/pull/21
 
-## [0.5.0] 2020-04-30
+## [0.5.0] - 2020-04-30
 
 ### Added
 
@@ -53,7 +55,7 @@
 
 [#19]: https://github.com/OSSystems/compress-tools-rs/pull/19
 
-## [0.4.0] 2020-04-17
+## [0.4.0] - 2020-04-17
 
 ### Added
 
@@ -72,13 +74,13 @@
 [#14]: https://github.com/OSSystems/compress-tools-rs/pull/14
 [#17]: https://github.com/OSSystems/compress-tools-rs/pull/17
 
-## [0.3.1] 2020-04-14
+## [0.3.1] - 2020-04-14
 
 ### Fixed
 
 * Fixed outdated README
 
-## [0.3.0] 2020-04-14
+## [0.3.0] - 2020-04-14
 
 ### Added
 
@@ -95,7 +97,7 @@
 [#4]: https://github.com/OSSystems/compress-tools-rs/pull/4
 [#6]: https://github.com/OSSystems/compress-tools-rs/pull/6
 
-## [0.2.0] 2019-04-29
+## [0.2.0] - 2019-04-29
 
 ### Added
 
@@ -103,7 +105,7 @@
 
 [#3]: https://github.com/OSSystems/compress-tools-rs/pull/3
 
-## [0.1.2] 2019-04-29
+## [0.1.2] - 2019-04-29
 
 ### Changed
 
@@ -111,6 +113,6 @@
 
 * Use BusyBox compatible commands for uncompression
 
-## [0.1.0] 2019-04-25
+## [0.1.0] - 2019-04-25
 
 * First release

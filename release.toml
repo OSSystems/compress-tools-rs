@@ -1,1 +1,6 @@
 no-dev-version = true
+pre-release-replacements = [
+  {file="CHANGES.md", search="Unreleased", replace="{{version}}"},
+  {file="CHANGES.md", search="ReleaseDate", replace="{{date}}"},
+  {file="CHANGES.md", search="<!-- next-header -->", replace="<!-- next-header -->\n\n## [Unreleased] - ReleaseDate", exactly=1},
+]
