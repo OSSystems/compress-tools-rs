@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.7.0] - 2020-09-05
+
 ### Added
 
 * Optional async support
