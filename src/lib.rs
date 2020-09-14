@@ -208,24 +208,26 @@ where
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
-                        let target_path =
-                            dest.join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
-                        ffi::archive_entry_set_pathname(
-                            entry,
-                            CString::new(target_path.to_str().unwrap())
-                                .unwrap()
-                                .into_raw(),
-                        );
+                        let target_path = {
+                            let p = dest
+                                .join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
+                            let p = p.to_str().unwrap();
+
+                            CString::new(p).unwrap()
+                        };
+
+                        ffi::archive_entry_set_pathname(entry, target_path.as_ptr());
 
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
-                            let target_path = dest.join(CStr::from_ptr(link_name).to_str()?);
-                            ffi::archive_entry_set_hardlink(
-                                entry,
-                                CString::new(target_path.to_str().unwrap())
-                                    .unwrap()
-                                    .into_raw(),
-                            );
+                            let target_path = {
+                                let p = dest.join(CStr::from_ptr(link_name).to_str()?);
+                                let p = p.to_str().unwrap();
+
+                                CString::new(p).unwrap()
+                            };
+
+                            ffi::archive_entry_set_hardlink(entry, target_path.as_ptr());
                         }
 
                         ffi::archive_write_header(archive_writer, entry);
