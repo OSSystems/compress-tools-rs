@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.7.1] - 2020-09-15
+
 ### Fixed
 
 * Fix two memory leaks related to entry pathname and hardlink handling. [#33]
