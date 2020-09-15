@@ -4,6 +4,13 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+* Fix two memory leaks related to entry pathname and hardlink handling. [#33]
+* Fix a memory leak found in the error handling code path. [#33]
+
+[#33]: https://github.com/OSSystems/compress-tools-rs/pull/33
+
 ## [0.7.0] - 2020-09-05
 
 ### Added
