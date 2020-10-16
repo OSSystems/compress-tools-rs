@@ -13,7 +13,7 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut listener = TcpListener::bind("127.0.0.1:1234").await?;
+    let listener = TcpListener::bind("127.0.0.1:1234").await?;
     loop {
         let (socket, _) = listener.accept().await?;
         tokio::spawn(async move {
