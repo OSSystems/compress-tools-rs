@@ -2,7 +2,7 @@ fn main() {
     find_libarchive()
 }
 
-#[cfg(not(windows))]
+#[cfg(not(target_env = "msvc"))]
 fn find_libarchive() {
     pkg_config::Config::new()
         .atleast_version("3")
@@ -10,7 +10,7 @@ fn find_libarchive() {
         .expect("Unable to find libarchive");
 }
 
-#[cfg(windows)]
+#[cfg(target_env = "msvc")]
 fn find_libarchive() {
     vcpkg::Config::new()
         .find_package("libarchive")
