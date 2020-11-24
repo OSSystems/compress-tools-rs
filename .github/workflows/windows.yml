@@ -35,8 +35,8 @@ jobs:
         shell: powershell
         run: |
           echo $Env:VCPKG_INSTALLATION_ROOT
-          echo "::set-env name=VCPKG_ROOT::$Env:VCPKG_INSTALLATION_ROOT"
-          echo "::set-env name=VCPKGRS_DYNAMIC::1"
+          echo "VCPKG_ROOT=$Env:VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+          echo "VCPKGRS_DYNAMIC=1" >> $GITHUB_ENV
       - name: Checkout sources
         uses: actions/checkout@v2
       - name: Install ${{ matrix.version }}
