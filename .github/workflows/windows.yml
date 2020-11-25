@@ -20,23 +20,22 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Cache Dependencies
-        id: cache-vcpkg
-        uses: actions/cache@v1
-        with:
-          path: C:/vcpkg/installed
-          key: vcpkg-installed-cache
       - name: Install Dependencies
-        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
+        uses: lukka/run-vcpkg@v6
+        with:
+          vcpkgArguments: "libarchive"
+          vcpkgTriplet: x64-windows
+          vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+          appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
+          # run-vcpkg action needs to have a pinned down version of vcpkg
+          # this commit id refferes to the vcpkg version 2021.xx
+          vcpkgGitCommitId: acb6b10e7fdf5e8519c18398d0b069e1d58ca025
+
+      - name: Test vcpkg
         run: |
-          vcpkg install libarchive --triplet x64-windows
-          vcpkg integrate install
-      - name: Export vcpkg build vars
-        shell: powershell
-        run: |
-          echo $Env:VCPKG_INSTALLATION_ROOT
-          echo "VCPKG_ROOT=$Env:VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-          echo "VCPKGRS_DYNAMIC=1" >> $GITHUB_ENV
+          vcpkg list
+          vcpkg search libarchive
+          vcpkg search libarchive --triplet x64-windows
       - name: Checkout sources
         uses: actions/checkout@v2
       - name: Install ${{ matrix.version }}
@@ -68,6 +67,9 @@ jobs:
 
       - name: Check build
         uses: actions-rs/cargo@v1
+        env:
+          OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows"
+          VCPKGRS_DYNAMIC: 1
         with:
           command: check
           args: --release --all --bins --examples --tests
@@ -75,6 +77,9 @@ jobs:
       - name: Tests
         uses: actions-rs/cargo@v1
         timeout-minutes: 10
+        env:
+          OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows"
+          VCPKGRS_DYNAMIC: 1
         with:
           command: test
           args: --release --all --all-features --no-fail-fast -- --nocapture
