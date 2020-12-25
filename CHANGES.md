@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Upgrade `tokio` to 1.0.0 release
+
 ## [0.8.0] - 2020-10-19
 
 ### Changed

@@ -4,7 +4,7 @@ use crate::{async_support, async_support::BlockingExecutor, Ownership, Result};
 use async_trait::async_trait;
 use std::path::Path;
 use tokio::io::{AsyncRead, AsyncWrite};
-use tokio_util::compat::{Tokio02AsyncReadCompatExt, Tokio02AsyncWriteCompatExt};
+use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 struct TokioBlockingExecutor {}
 
