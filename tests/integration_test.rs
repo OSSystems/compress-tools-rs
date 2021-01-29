@@ -71,6 +71,21 @@ fn get_a_file_from_tar() {
     assert_eq!(written, 14, "Uncompressed bytes count did not match");
 }
 
+#[test]
+fn get_a_file_from_7z() {
+    let mut source = std::fs::File::open("tests/fixtures/tree.7z").unwrap();
+    let mut target = Vec::default();
+
+    let written = uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+        .expect("Failed to get the file");
+    assert_eq!(
+        String::from_utf8_lossy(&target),
+        "Goodbye World\n",
+        "Uncompressed file did not match",
+    );
+    assert_eq!(written, 14, "Uncompressed bytes count did not match");
+}
+
 #[async_std::test]
 #[cfg(feature = "futures_support")]
 async fn get_a_file_from_tar_futures() {

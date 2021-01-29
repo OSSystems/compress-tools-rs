@@ -19,7 +19,7 @@ use futures_util::{
 };
 use std::{
     future::Future,
-    io::{ErrorKind, Read, Write},
+    io::{ErrorKind, Read, Seek, SeekFrom, Write},
     path::Path,
 };
 
@@ -50,6 +50,14 @@ impl Read for AsyncReadWrapper {
             }
             None => 0,
         })
+    }
+}
+
+// Hints Rust compiler that the seek is indeed supported, but
+// underlying, it is done by the libarchive_seek_callback() callback.
+impl Seek for AsyncReadWrapper {
+    fn seek(&mut self, _: SeekFrom) -> std::io::Result<u64> {
+        unreachable!("We need to use libarchive_seek_callback() underlying.")
     }
 }
 
