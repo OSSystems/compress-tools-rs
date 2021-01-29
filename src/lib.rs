@@ -111,6 +111,7 @@ where
         Mode::AllFormat,
         source,
         |archive_reader, _, mut entry| unsafe {
+            #[allow(clippy::vec_init_then_push)]
             let mut file_list = Vec::new();
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
