@@ -4,7 +4,7 @@
 
 ## [Unreleased] - ReleaseDate
 
-* Update MSRV to 1.43.0
+* Update MSRV to 1.44.0
 
 ## [0.9.0] - 2020-12-25
 
