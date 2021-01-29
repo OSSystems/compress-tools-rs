@@ -4,7 +4,15 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
 * Update MSRV to 1.44.0
+
+### Fixed
+
+* Fix error when uncompressing specific files from 7z archives. [#48]
+
+[#48]: https://github.com/OSSystems/compress-tools-rs/pull/48
 
 ## [0.9.0] - 2020-12-25
 

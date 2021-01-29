@@ -59,10 +59,11 @@ pub mod tokio_support;
 
 use error::archive_result;
 pub use error::{Error, Result};
+use io::{Seek, SeekFrom};
 use std::{
     ffi::{CStr, CString},
     io::{self, Read, Write},
-    os::raw::c_void,
+    os::raw::{c_int, c_void},
     path::Path,
     slice,
 };
@@ -78,13 +79,20 @@ pub enum Ownership {
     Ignore,
 }
 
-struct Pipe<'a> {
+struct ReaderPipe<'a> {
     reader: &'a mut dyn Read,
     buffer: &'a mut [u8],
 }
 
+trait ReadAndSeek: Read + Seek {}
+impl<T> ReadAndSeek for T where T: Read + Seek {}
+
+struct SeekableReaderPipe<'a> {
+    reader: &'a mut dyn ReadAndSeek,
+    buffer: &'a mut [u8],
+}
+
 enum Mode {
-    AllFormat,
     RawFormat,
     WriteDisk { ownership: Ownership },
 }
@@ -105,29 +113,25 @@ enum Mode {
 /// ```
 pub fn list_archive_files<R>(source: R) -> Result<Vec<String>>
 where
-    R: Read,
+    R: Read + Seek,
 {
-    run_with_archive(
-        Mode::AllFormat,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            #[allow(clippy::vec_init_then_push)]
-            let mut file_list = Vec::new();
-            loop {
-                match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        file_list.push(
-                            CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                .to_str()?
-                                .to_string(),
-                        );
-                    }
-                    ffi::ARCHIVE_EOF => return Ok(file_list),
-                    _ => return Err(Error::from(archive_reader)),
+    run_with_seekable_archive(source, |archive_reader, _, mut entry| unsafe {
+        let mut file_list = Vec::new();
+        #[allow(clippy::vec_init_then_push)]
+        loop {
+            match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                ffi::ARCHIVE_OK => {
+                    file_list.push(
+                        CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                            .to_str()?
+                            .to_string(),
+                    );
                 }
+                ffi::ARCHIVE_EOF => return Ok(file_list),
+                _ => return Err(Error::from(archive_reader)),
             }
-        },
-    )
+        }
+    })
 }
 
 /// Uncompress a file using the `source` need as reader and the `target` as a
@@ -199,7 +203,7 @@ where
 /// ```
 pub fn uncompress_archive<R>(source: R, dest: &Path, ownership: Ownership) -> Result<()>
 where
-    R: Read,
+    R: Read + Seek,
 {
     run_with_archive(
         Mode::WriteDisk { ownership },
@@ -265,35 +269,30 @@ where
 /// ```
 pub fn uncompress_archive_file<R, W>(source: R, target: W, path: &str) -> Result<usize>
 where
-    R: Read,
+    R: Read + Seek,
     W: Write,
 {
-    run_with_archive(
-        Mode::AllFormat,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            loop {
-                match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        let file_name =
-                            CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?;
-                        if file_name == path {
-                            break;
-                        }
+    run_with_seekable_archive(source, |archive_reader, _, mut entry| unsafe {
+        loop {
+            match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                ffi::ARCHIVE_OK => {
+                    let file_name = CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?;
+                    if file_name == path {
+                        break;
                     }
-                    ffi::ARCHIVE_EOF => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotFound,
-                            format!("path {} doesn't exist inside archive", path),
-                        )
-                        .into())
-                    }
-                    _ => return Err(Error::from(archive_reader)),
                 }
+                ffi::ARCHIVE_EOF => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("path {} doesn't exist inside archive", path),
+                    )
+                    .into())
+                }
+                _ => return Err(Error::from(archive_reader)),
             }
-            libarchive_write_data_block(archive_reader, target)
-        },
-    )
+        }
+        libarchive_write_data_block(archive_reader, target)
+    })
 }
 
 fn run_with_archive<F, R, T>(mode: Mode, mut reader: R, f: F) -> Result<T>
@@ -315,10 +314,6 @@ where
             match mode {
                 Mode::RawFormat => archive_result(
                     ffi::archive_read_support_format_raw(archive_reader),
-                    archive_reader,
-                )?,
-                Mode::AllFormat => archive_result(
-                    ffi::archive_read_support_format_all(archive_reader),
                     archive_reader,
                 )?,
                 Mode::WriteDisk { ownership } => {
@@ -355,7 +350,7 @@ where
                 return Err(Error::NullArchive);
             }
 
-            let mut pipe = Pipe {
+            let mut pipe = ReaderPipe {
                 reader: &mut reader,
                 buffer: &mut [0; READER_BUFFER_SIZE],
             };
@@ -363,9 +358,65 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut Pipe) as *mut c_void,
+                    (&mut pipe as *mut ReaderPipe) as *mut c_void,
                     None,
                     Some(libarchive_read_callback),
+                    None,
+                ),
+                archive_reader,
+            )?;
+
+            f(archive_reader, archive_writer, archive_entry)
+        })();
+
+        archive_result(ffi::archive_read_close(archive_reader), archive_reader)?;
+        archive_result(ffi::archive_read_free(archive_reader), archive_reader)?;
+
+        archive_result(ffi::archive_write_close(archive_writer), archive_writer)?;
+        archive_result(ffi::archive_write_free(archive_writer), archive_writer)?;
+
+        ffi::archive_entry_free(archive_entry);
+
+        res
+    }
+}
+
+fn run_with_seekable_archive<F, R, T>(mut reader: R, f: F) -> Result<T>
+where
+    F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
+    R: Read + Seek,
+{
+    unsafe {
+        let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
+        let archive_reader = ffi::archive_read_new();
+        let archive_writer = ffi::archive_write_disk_new();
+
+        let res = (|| {
+            archive_result(
+                ffi::archive_read_support_format_all(archive_reader),
+                archive_reader,
+            )?;
+
+            archive_result(
+                ffi::archive_read_set_seek_callback(archive_reader, Some(libarchive_seek_callback)),
+                archive_reader,
+            )?;
+
+            if archive_reader.is_null() || archive_writer.is_null() {
+                return Err(Error::NullArchive);
+            }
+
+            let mut pipe = SeekableReaderPipe {
+                reader: &mut reader,
+                buffer: &mut [0; READER_BUFFER_SIZE],
+            };
+
+            archive_result(
+                ffi::archive_read_open(
+                    archive_reader,
+                    (&mut pipe as *mut SeekableReaderPipe) as *mut c_void,
+                    None,
+                    Some(libarchive_seekable_read_callback),
                     None,
                 ),
                 archive_reader,
@@ -436,12 +487,53 @@ where
     }
 }
 
+unsafe extern "C" fn libarchive_seek_callback(
+    _: *mut ffi::archive,
+    client_data: *mut c_void,
+    offset: ffi::la_int64_t,
+    whence: c_int,
+) -> i64 {
+    let pipe = (client_data as *mut SeekableReaderPipe).as_mut().unwrap();
+    let whence = match whence {
+        0 => SeekFrom::Start(offset as u64),
+        1 => SeekFrom::Current(offset),
+        2 => SeekFrom::End(offset),
+        _ => return -1,
+    };
+
+    match pipe.reader.seek(whence) {
+        Ok(offset) => offset as i64,
+        Err(_) => -1,
+    }
+}
+
+unsafe extern "C" fn libarchive_seekable_read_callback(
+    archive: *mut ffi::archive,
+    client_data: *mut c_void,
+    buffer: *mut *const c_void,
+) -> ffi::la_ssize_t {
+    let pipe = (client_data as *mut SeekableReaderPipe).as_mut().unwrap();
+
+    *buffer = pipe.buffer.as_ptr() as *const c_void;
+
+    match pipe.reader.read(&mut pipe.buffer) {
+        Ok(size) => size as ffi::la_ssize_t,
+        Err(e) => {
+            let description = CString::new(e.to_string()).unwrap();
+
+            ffi::archive_set_error(archive, e.raw_os_error().unwrap_or(0), description.as_ptr());
+
+            -1
+        }
+    }
+}
+
 unsafe extern "C" fn libarchive_read_callback(
     archive: *mut ffi::archive,
     client_data: *mut c_void,
     buffer: *mut *const c_void,
 ) -> ffi::la_ssize_t {
-    let pipe = (client_data as *mut Pipe).as_mut().unwrap();
+    let pipe = (client_data as *mut ReaderPipe).as_mut().unwrap();
 
     *buffer = pipe.buffer.as_ptr() as *const c_void;
 

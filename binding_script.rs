@@ -39,6 +39,7 @@ fn main() {
         .whitelist_var("ARCHIVE_EXTRACT_FFLAGS")
         .whitelist_var("ARCHIVE_EXTRACT_XATTR")
         .whitelist_function("archive_read_new")
+        .whitelist_function("archive_read_set_seek_callback")
         .whitelist_function("archive_read_support_filter_all")
         .whitelist_function("archive_read_support_format_all")
         .whitelist_function("archive_read_support_format_raw")

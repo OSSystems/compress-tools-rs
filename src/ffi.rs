@@ -32,6 +32,14 @@ pub type archive_read_callback = ::std::option::Option<
         _buffer: *mut *const ::std::os::raw::c_void,
     ) -> la_ssize_t,
 >;
+pub type archive_seek_callback = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut archive,
+        _client_data: *mut ::std::os::raw::c_void,
+        offset: la_int64_t,
+        whence: ::std::os::raw::c_int,
+    ) -> la_int64_t,
+>;
 pub type archive_open_callback = ::std::option::Option<
     unsafe extern "C" fn(
         arg1: *mut archive,
@@ -55,6 +63,12 @@ extern "C" {
 }
 extern "C" {
     pub fn archive_read_support_format_raw(arg1: *mut archive) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn archive_read_set_seek_callback(
+        arg1: *mut archive,
+        arg2: archive_seek_callback,
+    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn archive_read_open(
