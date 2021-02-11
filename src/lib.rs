@@ -92,9 +92,9 @@ struct SeekableReaderPipe<'a> {
     buffer: &'a mut [u8],
 }
 
-enum Mode {
-    RawFormat,
-    WriteDisk { ownership: Ownership },
+enum WriteMode {
+    Buffer,
+    Disk { ownership: Ownership },
 }
 
 /// Get all files in a archive using `source` as a reader.
@@ -171,7 +171,7 @@ where
     W: Write,
 {
     run_with_archive(
-        Mode::RawFormat,
+        WriteMode::Buffer,
         source,
         |archive_reader, _, mut entry| unsafe {
             archive_result(
@@ -206,7 +206,7 @@ where
     R: Read + Seek,
 {
     run_with_archive(
-        Mode::WriteDisk { ownership },
+        WriteMode::Disk { ownership },
         source,
         |archive_reader, archive_writer, mut entry| unsafe {
             loop {
@@ -295,7 +295,7 @@ where
     })
 }
 
-fn run_with_archive<F, R, T>(mode: Mode, mut reader: R, f: F) -> Result<T>
+fn run_with_archive<F, R, T>(write_mode: WriteMode, mut reader: R, f: F) -> Result<T>
 where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
     R: Read,
@@ -311,12 +311,13 @@ where
                 archive_reader,
             )?;
 
-            match mode {
-                Mode::RawFormat => archive_result(
-                    ffi::archive_read_support_format_raw(archive_reader),
-                    archive_reader,
-                )?,
-                Mode::WriteDisk { ownership } => {
+            archive_result(
+                ffi::archive_read_support_format_raw(archive_reader),
+                archive_reader,
+            )?;
+
+            match write_mode {
+                WriteMode::Disk { ownership } => {
                     let mut writer_flags = ffi::ARCHIVE_EXTRACT_TIME
                         | ffi::ARCHIVE_EXTRACT_PERM
                         | ffi::ARCHIVE_EXTRACT_ACL
@@ -339,11 +340,8 @@ where
                         ffi::archive_read_support_format_all(archive_reader),
                         archive_reader,
                     )?;
-                    archive_result(
-                        ffi::archive_read_support_format_raw(archive_reader),
-                        archive_reader,
-                    )?;
                 }
+                WriteMode::Buffer => (),
             }
 
             if archive_reader.is_null() || archive_writer.is_null() {
