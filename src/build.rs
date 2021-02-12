@@ -5,7 +5,7 @@ fn main() {
 #[cfg(not(target_env = "msvc"))]
 fn find_libarchive() {
     pkg_config::Config::new()
-        .atleast_version("3")
+        .atleast_version("3.2.0")
         .probe("libarchive")
         .expect("Unable to find libarchive");
 }
