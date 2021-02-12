@@ -19,9 +19,10 @@ functionalities.
 
 ## Dependencies
 
-You must have `libarchive` properly installed on your system in order to use
-this. If building on *nix systems, `pkg-config` is used to locate the
-`libarchive`; on Windows `vcpkg` will be used to locating the `libarchive`.
+You must have `libarchive`, 3.2.0 or newer, properly installed on your
+system in order to use this. If building on *nix systems, `pkg-config` is
+used to locate the `libarchive`; on Windows `vcpkg` will be used to locating
+the `libarchive`.
 
 The minimum supported Rust version is 1.44.
 
