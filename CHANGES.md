@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.10.0] - 2021-02-11
+
 ### Changed
 
 * Update MSRV to 1.44.0
