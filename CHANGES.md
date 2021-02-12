@@ -4,11 +4,15 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+* Fixed the build script so it enforce the use of `libarchive` 3.2.0 or newer.
+
 ## [0.10.0] - 2021-02-11
 
 ### Changed
 
-* Update MSRV to 1.44.0
+* Update MSRV to 1.44.0.
 
 ### Fixed
 
@@ -18,13 +22,13 @@
 
 ## [0.9.0] - 2020-12-25
 
-* Upgrade `tokio` to 1.0.0 release
+* Upgrade `tokio` to 1.0.0 release.
 
 ## [0.8.0] - 2020-10-19
 
 ### Changed
 
-* Upgrade `tokio` to 0.3.0 release
+* Upgrade `tokio` to 0.3.0 release.
 
 ## [0.7.1] - 2020-09-15
 
