@@ -1,4 +1,4 @@
-// Copyright (C) 2019, 2020 O.S. Systems Sofware LTDA
+// Copyright (C) 2019-2021 O.S. Systems Sofware LTDA
 //
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
