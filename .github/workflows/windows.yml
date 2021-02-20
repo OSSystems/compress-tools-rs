@@ -27,9 +27,7 @@ jobs:
           vcpkgTriplet: x64-windows
           vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
           appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
-          # run-vcpkg action needs to have a pinned down version of vcpkg
-          # this commit id refferes to the vcpkg version 2021.xx
-          vcpkgGitCommitId: acb6b10e7fdf5e8519c18398d0b069e1d58ca025
+          vcpkgGitCommitId: 2020.11-1
 
       - name: Test vcpkg
         run: |
