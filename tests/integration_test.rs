@@ -255,10 +255,7 @@ fn uncompress_same_file_preserve_owner() {
 }
 
 #[test]
-#[cfg(unix)]
 fn uncompress_to_dir_not_preserve_owner() {
-    use std::os::unix::fs::PermissionsExt;
-
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
 
@@ -275,28 +272,35 @@ fn uncompress_to_dir_not_preserve_owner() {
         true,
         "the path doesn't exist"
     );
-    assert_eq!(
-        dir.path()
-            .join("tree/branch1/leaf")
-            .metadata()
-            .unwrap()
-            .permissions()
-            .mode()
-            % 0o1000,
-        0o664,
-        "the permissions did not match"
-    );
-    assert_eq!(
-        dir.path()
-            .join("tree/branch2/leaf")
-            .metadata()
-            .unwrap()
-            .permissions()
-            .mode()
-            % 0o1000,
-        0o664,
-        "the permissions did not match"
-    );
+
+    // This block is Unix specific; keep the rest of test platform agnostic.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        assert_eq!(
+            dir.path()
+                .join("tree/branch1/leaf")
+                .metadata()
+                .unwrap()
+                .permissions()
+                .mode()
+                % 0o1000,
+            0o664,
+            "the permissions did not match"
+        );
+        assert_eq!(
+            dir.path()
+                .join("tree/branch2/leaf")
+                .metadata()
+                .unwrap()
+                .permissions()
+                .mode()
+                % 0o1000,
+            0o664,
+            "the permissions did not match"
+        );
+    }
 
     let contents = std::fs::read_to_string(dir.path().join("tree/branch2/leaf")).unwrap();
     assert_eq!(
