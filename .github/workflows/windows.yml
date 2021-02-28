@@ -22,22 +22,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Install Dependencies
-        uses: lukka/run-vcpkg@v6
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install libarchive
+        uses: lukka/run-vcpkg@v7
         with:
           vcpkgArguments: "libarchive"
           vcpkgTriplet: x64-windows
-          vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-          appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
           vcpkgGitCommitId: 2020.11-1
 
-      - name: Test vcpkg
-        run: |
-          vcpkg list
-          vcpkg search libarchive
-          vcpkg search libarchive --triplet x64-windows
-      - name: Checkout sources
-        uses: actions/checkout@v2
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
         with:
