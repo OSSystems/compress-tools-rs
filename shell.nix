@@ -5,6 +5,7 @@ with pkgs;
 stdenv.mkDerivation {
   name = "compress-tools";
   buildInputs = [
+    rust-bindgen
     pkg-config
     libarchive
     clang
