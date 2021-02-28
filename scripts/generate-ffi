@@ -1,0 +1,69 @@
+#!/bin/sh
+
+die() {
+    echo "ERROR: $*"
+    exit 1
+}
+
+is_installed() {
+    type $1 > /dev/null 2>&1 || die "'$1' tool has not been found. Install it and try again"
+}
+
+is_installed bindgen
+
+basedir=$(dirname $(readlink -f $0))/..
+
+# Generate temporary wrapper, so we can include the required headers
+trap "rm -f $basedir/wrapper.h" EXIT
+cat <<EOF > $basedir/wrapper.h
+#include <archive.h>
+#include <archive_entry.h>
+EOF
+
+bindgen \
+    \
+    --size_t-is-usize \
+    \
+    --raw-line "#![allow(non_camel_case_types)]" \
+    --raw-line "pub const ARCHIVE_EOF: i32 = 1;" \
+    --raw-line "pub const ARCHIVE_OK: i32 = 0;" \
+    \
+    --whitelist-var "ARCHIVE_EXTRACT_TIME" \
+    --whitelist-var "ARCHIVE_EXTRACT_PERM" \
+    --whitelist-var "ARCHIVE_EXTRACT_ACL" \
+    --whitelist-var "ARCHIVE_EXTRACT_FFLAGS" \
+    --whitelist-var "ARCHIVE_EXTRACT_OWNER" \
+    --whitelist-var "ARCHIVE_EXTRACT_FFLAGS" \
+    --whitelist-var "ARCHIVE_EXTRACT_XATTR" \
+    --whitelist-function "archive_read_new" \
+    --whitelist-function "archive_read_set_seek_callback" \
+    --whitelist-function "archive_read_support_filter_all" \
+    --whitelist-function "archive_read_support_format_all" \
+    --whitelist-function "archive_read_support_format_raw" \
+    --whitelist-function "archive_read_close" \
+    --whitelist-function "archive_read_free" \
+    --whitelist-function "archive_read_data_block" \
+    --whitelist-function "archive_read_next_header" \
+    --whitelist-function "archive_read_open" \
+    --whitelist-function "archive_write_disk_new" \
+    --whitelist-function "archive_write_disk_set_options" \
+    --whitelist-function "archive_write_disk_set_standard_lookup" \
+    --whitelist-function "archive_write_header" \
+    --whitelist-function "archive_write_finish_entry" \
+    --whitelist-function "archive_write_data_block" \
+    --whitelist-function "archive_write_close" \
+    --whitelist-function "archive_write_free" \
+    --whitelist-function "archive_entry_pathname" \
+    --whitelist-function "archive_entry_free" \
+    --whitelist-function "archive_entry_set_pathname" \
+    --whitelist-function "archive_entry_set_hardlink" \
+    --whitelist-function "archive_entry_hardlink" \
+    --whitelist-function "archive_set_error" \
+    --whitelist-function "archive_error_string" \
+    --whitelist-function "archive_errno" \
+    \
+    --output $basedir/src/ffi.rs \
+    \
+    $basedir/wrapper.h
+
+rm $basedir/wrapper.h
