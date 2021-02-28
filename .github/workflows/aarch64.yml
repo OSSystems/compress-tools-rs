@@ -19,7 +19,7 @@ jobs:
           - nightly
 
     name: Test ${{ matrix.version }} - aarch64-unknown-linux-gnu
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout sources
