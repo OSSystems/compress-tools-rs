@@ -3,5 +3,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 mod generated;
+mod locale;
 
 pub(crate) use crate::ffi::generated::*;
+pub(crate) use locale::UTF8LocaleGuard;
