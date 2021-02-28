@@ -62,8 +62,9 @@ bindgen \
     --whitelist-function "archive_error_string" \
     --whitelist-function "archive_errno" \
     \
-    --output $basedir/src/ffi.rs \
+    --output $basedir/src/ffi/generated.rs \
     \
     $basedir/wrapper.h
 
-rm $basedir/wrapper.h
+sed -i 's,pub ,pub(crate) ,g' $basedir/src/ffi/generated.rs
+cargo fmt --all
