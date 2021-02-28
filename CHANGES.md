@@ -6,7 +6,10 @@
 
 ### Fixed
 
+* Fix unpacking of filenames with contains UTF-8 characters. [#52]
 * Fixed the build script so it enforce the use of `libarchive` 3.2.0 or newer.
+
+[#52]: https://github.com/OSSystems/compress-tools-rs/pull/52
 
 ## [0.10.0] - 2021-02-11
 

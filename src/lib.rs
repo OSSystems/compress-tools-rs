@@ -116,6 +116,7 @@ pub fn list_archive_files<R>(source: R) -> Result<Vec<String>>
 where
     R: Read + Seek,
 {
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
     run_with_seekable_archive(source, |archive_reader, _, mut entry| unsafe {
         let mut file_list = Vec::new();
         #[allow(clippy::vec_init_then_push)]
@@ -171,6 +172,7 @@ where
     R: Read,
     W: Write,
 {
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
     run_with_archive(
         WriteMode::Buffer,
         source,
@@ -206,6 +208,7 @@ pub fn uncompress_archive<R>(source: R, dest: &Path, ownership: Ownership) -> Re
 where
     R: Read + Seek,
 {
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
     run_with_archive(
         WriteMode::Disk { ownership },
         source,
@@ -273,6 +276,7 @@ where
     R: Read + Seek,
     W: Write,
 {
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
     run_with_seekable_archive(source, |archive_reader, _, mut entry| unsafe {
         loop {
             match ffi::archive_read_next_header(archive_reader, &mut entry) {
@@ -301,6 +305,7 @@ where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
     R: Read,
 {
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
     unsafe {
         let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
         let archive_reader = ffi::archive_read_new();

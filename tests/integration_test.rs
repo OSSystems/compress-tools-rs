@@ -310,6 +310,21 @@ fn uncompress_to_dir_not_preserve_owner() {
 }
 
 #[test]
+fn uncompress_to_dir_with_utf8_pathname() {
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let mut source = std::fs::File::open("tests/fixtures/utf8.tar").unwrap();
+
+    uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
+        .expect("Failed to uncompress the file");
+
+    assert_eq!(
+        dir.path().join("utf-8-file-name-őúíá").exists(),
+        true,
+        "the path doesn't exist"
+    );
+}
+
+#[test]
 fn uncompress_same_file_not_preserve_owner() {
     uncompress_archive(
         &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
