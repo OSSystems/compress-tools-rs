@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.11.0] - 2021-03-03
+
 ### Fixed
 
 * Fix unpacking of filenames with contains UTF-8 characters. [#52]
