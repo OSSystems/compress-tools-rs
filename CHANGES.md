@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Fix when uncompressing 7z archive to a directory. [#53]
+
+[#53]: https://github.com/OSSystems/compress-tools-rs/issues/53
+
 ## [0.11.0] - 2021-03-03
 
 ### Fixed

@@ -294,7 +294,7 @@ where
 fn run_with_archive<F, R, T>(ownership: Ownership, mut reader: R, f: F) -> Result<T>
 where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
-    R: Read,
+    R: Read + Seek,
 {
     let _utf8_guard = ffi::UTF8LocaleGuard::new();
     unsafe {
@@ -310,6 +310,11 @@ where
 
             archive_result(
                 ffi::archive_read_support_format_raw(archive_reader),
+                archive_reader,
+            )?;
+
+            archive_result(
+                ffi::archive_read_set_seek_callback(archive_reader, Some(libarchive_seek_callback)),
                 archive_reader,
             )?;
 
@@ -340,7 +345,7 @@ where
                 return Err(Error::NullArchive);
             }
 
-            let mut pipe = ReaderPipe {
+            let mut pipe = SeekableReaderPipe {
                 reader: &mut reader,
                 buffer: &mut [0; READER_BUFFER_SIZE],
             };
@@ -348,9 +353,9 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut ReaderPipe) as *mut c_void,
+                    (&mut pipe as *mut SeekableReaderPipe) as *mut c_void,
                     None,
-                    Some(libarchive_read_callback),
+                    Some(libarchive_seekable_read_callback),
                     None,
                 ),
                 archive_reader,
