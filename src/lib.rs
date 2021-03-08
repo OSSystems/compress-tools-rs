@@ -93,11 +93,6 @@ struct SeekableReaderPipe<'a> {
     buffer: &'a mut [u8],
 }
 
-enum WriteMode {
-    Buffer,
-    Disk { ownership: Ownership },
-}
-
 /// Get all files in a archive using `source` as a reader.
 /// # Example
 ///
@@ -173,17 +168,13 @@ where
     W: Write,
 {
     let _utf8_guard = ffi::UTF8LocaleGuard::new();
-    run_with_archive(
-        WriteMode::Buffer,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            archive_result(
-                ffi::archive_read_next_header(archive_reader, &mut entry),
-                archive_reader,
-            )?;
-            libarchive_write_data_block(archive_reader, target)
-        },
-    )
+    run_with_unseekable_archive(source, |archive_reader, _, mut entry| unsafe {
+        archive_result(
+            ffi::archive_read_next_header(archive_reader, &mut entry),
+            archive_reader,
+        )?;
+        libarchive_write_data_block(archive_reader, target)
+    })
 }
 
 /// Uncompress an archive using `source` as a reader and `dest` as the
@@ -210,7 +201,7 @@ where
 {
     let _utf8_guard = ffi::UTF8LocaleGuard::new();
     run_with_archive(
-        WriteMode::Disk { ownership },
+        ownership,
         source,
         |archive_reader, archive_writer, mut entry| unsafe {
             loop {
@@ -300,7 +291,7 @@ where
     })
 }
 
-fn run_with_archive<F, R, T>(write_mode: WriteMode, mut reader: R, f: F) -> Result<T>
+fn run_with_archive<F, R, T>(ownership: Ownership, mut reader: R, f: F) -> Result<T>
 where
     F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
     R: Read,
@@ -322,33 +313,28 @@ where
                 archive_reader,
             )?;
 
-            match write_mode {
-                WriteMode::Disk { ownership } => {
-                    let mut writer_flags = ffi::ARCHIVE_EXTRACT_TIME
-                        | ffi::ARCHIVE_EXTRACT_PERM
-                        | ffi::ARCHIVE_EXTRACT_ACL
-                        | ffi::ARCHIVE_EXTRACT_FFLAGS
-                        | ffi::ARCHIVE_EXTRACT_XATTR;
+            let mut writer_flags = ffi::ARCHIVE_EXTRACT_TIME
+                | ffi::ARCHIVE_EXTRACT_PERM
+                | ffi::ARCHIVE_EXTRACT_ACL
+                | ffi::ARCHIVE_EXTRACT_FFLAGS
+                | ffi::ARCHIVE_EXTRACT_XATTR;
 
-                    if let Ownership::Preserve = ownership {
-                        writer_flags |= ffi::ARCHIVE_EXTRACT_OWNER;
-                    };
+            if let Ownership::Preserve = ownership {
+                writer_flags |= ffi::ARCHIVE_EXTRACT_OWNER;
+            };
 
-                    archive_result(
-                        ffi::archive_write_disk_set_options(archive_writer, writer_flags as i32),
-                        archive_writer,
-                    )?;
-                    archive_result(
-                        ffi::archive_write_disk_set_standard_lookup(archive_writer),
-                        archive_writer,
-                    )?;
-                    archive_result(
-                        ffi::archive_read_support_format_all(archive_reader),
-                        archive_reader,
-                    )?;
-                }
-                WriteMode::Buffer => (),
-            }
+            archive_result(
+                ffi::archive_write_disk_set_options(archive_writer, writer_flags as i32),
+                archive_writer,
+            )?;
+            archive_result(
+                ffi::archive_write_disk_set_standard_lookup(archive_writer),
+                archive_writer,
+            )?;
+            archive_result(
+                ffi::archive_read_support_format_all(archive_reader),
+                archive_reader,
+            )?;
 
             if archive_reader.is_null() || archive_writer.is_null() {
                 return Err(Error::NullArchive);
@@ -421,6 +407,63 @@ where
                     (&mut pipe as *mut SeekableReaderPipe) as *mut c_void,
                     None,
                     Some(libarchive_seekable_read_callback),
+                    None,
+                ),
+                archive_reader,
+            )?;
+
+            f(archive_reader, archive_writer, archive_entry)
+        })();
+
+        archive_result(ffi::archive_read_close(archive_reader), archive_reader)?;
+        archive_result(ffi::archive_read_free(archive_reader), archive_reader)?;
+
+        archive_result(ffi::archive_write_close(archive_writer), archive_writer)?;
+        archive_result(ffi::archive_write_free(archive_writer), archive_writer)?;
+
+        ffi::archive_entry_free(archive_entry);
+
+        res
+    }
+}
+
+fn run_with_unseekable_archive<F, R, T>(mut reader: R, f: F) -> Result<T>
+where
+    F: FnOnce(*mut ffi::archive, *mut ffi::archive, *mut ffi::archive_entry) -> Result<T>,
+    R: Read,
+{
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    unsafe {
+        let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
+        let archive_reader = ffi::archive_read_new();
+        let archive_writer = ffi::archive_write_disk_new();
+
+        let res = (|| {
+            archive_result(
+                ffi::archive_read_support_filter_all(archive_reader),
+                archive_reader,
+            )?;
+
+            archive_result(
+                ffi::archive_read_support_format_raw(archive_reader),
+                archive_reader,
+            )?;
+
+            if archive_reader.is_null() || archive_writer.is_null() {
+                return Err(Error::NullArchive);
+            }
+
+            let mut pipe = ReaderPipe {
+                reader: &mut reader,
+                buffer: &mut [0; READER_BUFFER_SIZE],
+            };
+
+            archive_result(
+                ffi::archive_read_open(
+                    archive_reader,
+                    (&mut pipe as *mut ReaderPipe) as *mut c_void,
+                    None,
+                    Some(libarchive_read_callback),
                     None,
                 ),
                 archive_reader,
