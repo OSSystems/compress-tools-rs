@@ -195,14 +195,12 @@ fn uncompress_to_dir_preserve_owner() {
     uncompress_archive(&mut source, dir.path(), Ownership::Preserve)
         .expect("Failed to uncompress the file");
 
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch1/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch2/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
     assert_eq!(
@@ -262,14 +260,12 @@ fn uncompress_to_dir_not_preserve_owner() {
     uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
         .expect("Failed to uncompress the file");
 
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch1/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch2/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
 
@@ -317,14 +313,12 @@ fn uncompress_7z_to_dir_not_preserve_owner() {
     uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
         .expect("Failed to uncompress the file");
 
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch1/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
-    assert_eq!(
+    assert!(
         dir.path().join("tree/branch2/leaf").exists(),
-        true,
         "the path doesn't exist"
     );
 
@@ -343,9 +337,8 @@ fn uncompress_to_dir_with_utf8_pathname() {
     uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
         .expect("Failed to uncompress the file");
 
-    assert_eq!(
+    assert!(
         dir.path().join("utf-8-file-name-őúíá").exists(),
-        true,
         "the path doesn't exist"
     );
 }
