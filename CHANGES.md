@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Bump MSRV to 1.46. [#54]
+
+[#54]: https://github.com/OSSystems/compress-tools-rs/issues/54
+
 ## [0.11.1] - 2021-03-07
 
 * Fix when uncompressing 7z archive to a directory. [#53]
