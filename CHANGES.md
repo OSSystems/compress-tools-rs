@@ -5,8 +5,10 @@
 ## [Unreleased] - ReleaseDate
 
 * Bump MSRV to 1.46. [#54]
+* Install VcPkg/Pkg-Config depending on target env. [#56]
 
 [#54]: https://github.com/OSSystems/compress-tools-rs/issues/54
+[#56]: https://github.com/OSSystems/compress-tools-rs/pull/56
 
 ## [0.11.1] - 2021-03-07
 
