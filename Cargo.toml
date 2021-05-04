@@ -46,10 +46,10 @@ argh = "0.1"
 async-std = { version = "1.6.3", features = ["attributes"] }
 tokio = { version = "1.0.0", features = ["fs", "net"] }
 
-[target.'cfg(target_os = "windows")'.build-dependencies]
+[target.'cfg(target_env = "msvc")'.build-dependencies]
 vcpkg = "0.2"
 
-[target.'cfg(not(target_os = "windows"))'.build-dependencies]
+[target.'cfg(not(target_env = "msvc"))'.build-dependencies]
 pkg-config = "0.3"
 
 [[example]]
