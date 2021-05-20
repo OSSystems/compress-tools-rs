@@ -14,14 +14,14 @@ pub enum Error {
     #[display(fmt = "Extraction error: '{}'", _0)]
     Extraction(#[error(not(source))] String),
 
-    #[display(transparent)]
+    #[display(fmt = "{}", _0)]
     Io(io::Error),
 
-    #[display(transparent)]
+    #[display(fmt = "{}", _0)]
     Utf(std::str::Utf8Error),
 
     #[cfg(feature = "tokio_support")]
-    #[display(transparent)]
+    #[display(fmt = "{}", _0)]
     JoinError(tokio::task::JoinError),
 
     #[display(fmt = "Error to create the archive struct, is null")]
