@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.11.2] - 2021-05-29
+
 * Bump MSRV to 1.46. [#54]
 * Install VcPkg/Pkg-Config depending on target env. [#56]
 * Fix invalid display attribute causing build error [#58]
