@@ -61,7 +61,7 @@ fn get_a_file_from_tar() {
     let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
     let mut target = Vec::default();
 
-    let written = uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+    let written = uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
         .expect("Failed to get the file");
     assert_eq!(
         String::from_utf8_lossy(&target),
@@ -76,7 +76,7 @@ fn get_a_file_from_7z() {
     let mut source = std::fs::File::open("tests/fixtures/tree.7z").unwrap();
     let mut target = Vec::default();
 
-    let written = uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+    let written = uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
         .expect("Failed to get the file");
     assert_eq!(
         String::from_utf8_lossy(&target),
