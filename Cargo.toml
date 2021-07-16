@@ -43,6 +43,7 @@ tokio_support = ["async_support", "tokio", "tokio-util"]
 [dev-dependencies]
 tempfile = "3.1"
 argh = "0.1"
+argh_derive = "=0.1.1"
 async-std = { version = "1.6.3", features = ["attributes"] }
 tokio = { version = "1.0.0", features = ["fs", "net"] }
 
