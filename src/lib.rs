@@ -123,8 +123,8 @@ where
                     ffi::ARCHIVE_OK => {
                         file_list.push(
                             CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                .to_str()?
-                                .to_string(),
+                                .to_string_lossy()
+                                .into_owned(),
                         );
                     }
                     ffi::ARCHIVE_EOF => return Ok(file_list),
@@ -212,24 +212,27 @@ where
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
-                        let target_path = {
-                            let p = dest
-                                .join(CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?);
-                            let p = p.to_str().unwrap();
-
-                            CString::new(p).unwrap()
-                        };
+                        let target_path = CString::new(
+                            dest.join(
+                                CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                                    .to_string_lossy()
+                                    .into_owned(),
+                            )
+                            .to_str()
+                            .unwrap(),
+                        )
+                        .unwrap();
 
                         ffi::archive_entry_set_pathname(entry, target_path.as_ptr());
 
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
-                            let target_path = {
-                                let p = dest.join(CStr::from_ptr(link_name).to_str()?);
-                                let p = p.to_str().unwrap();
-
-                                CString::new(p).unwrap()
-                            };
+                            let target_path = CString::new(
+                                dest.join(CStr::from_ptr(link_name).to_string_lossy().into_owned())
+                                    .to_str()
+                                    .unwrap(),
+                            )
+                            .unwrap();
 
                             ffi::archive_entry_set_hardlink(entry, target_path.as_ptr());
                         }
@@ -279,8 +282,9 @@ where
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_OK => {
-                        let file_name =
-                            CStr::from_ptr(ffi::archive_entry_pathname(entry)).to_str()?;
+                        let file_name = CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                            .to_string_lossy()
+                            .into_owned();
                         if file_name == path {
                             break;
                         }

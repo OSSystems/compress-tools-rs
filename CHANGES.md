@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Use "lossy" strings for invalid filenames. [#59]
+
+[#59]: https://github.com/OSSystems/compress-tools-rs/issues/59
+
 ## [0.11.2] - 2021-05-29
 
 * Bump MSRV to 1.46. [#54]

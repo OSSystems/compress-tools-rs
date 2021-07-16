@@ -16,8 +16,6 @@ pub enum Error {
 
     Io(io::Error),
 
-    Utf(std::str::Utf8Error),
-
     #[cfg(feature = "tokio_support")]
     JoinError(tokio::task::JoinError),
 
