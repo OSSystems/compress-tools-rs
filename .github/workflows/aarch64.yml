@@ -67,8 +67,3 @@ jobs:
           use-cross: true
           command: test
           args: --target aarch64-unknown-linux-gnu --release --all --all-features --no-fail-fast -- --nocapture
-
-      - name: Clear the cargo caches
-        run: |
-          cargo install cargo-cache --no-default-features --features ci-autoclean
-          cargo-cache

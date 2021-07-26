@@ -94,8 +94,3 @@ jobs:
         if: matrix.version == 'nightly'
         run: |
           find target/ -name "*.gcda" -exec rm {} +
-
-      - name: Clear the cargo caches
-        run: |
-          cargo install cargo-cache --no-default-features --features ci-autoclean
-          cargo-cache
