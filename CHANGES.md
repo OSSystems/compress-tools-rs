@@ -5,6 +5,7 @@
 ## [Unreleased] - ReleaseDate
 
 * Use "lossy" strings for invalid filenames. [#59]
+* Add `uncompress_archive_callback`
 
 [#59]: https://github.com/OSSystems/compress-tools-rs/issues/59
 

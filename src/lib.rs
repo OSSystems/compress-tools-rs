@@ -177,7 +177,8 @@ where
             ffi::archive_read_next_header(archive_reader, &mut entry),
             archive_reader,
         )?;
-        libarchive_write_data_block(archive_reader, target)
+        let mut target = target;
+        libarchive_write_data_block(archive_reader, &mut target)
     })
 }
 
@@ -251,6 +252,69 @@ where
     )
 }
 
+/// Whether to continue the extraction or not.
+///
+/// Continue(true) will keep going where Continue(false) will stop without uncompressing any
+/// further files.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct Continue(pub bool);
+
+/// Uncompress an archive using `source` as a reader and calling `callback` with the relative file
+/// name and contents of each file.
+///
+/// Will allocate each file in memory.
+///
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+/// use std::path::Path;
+///
+/// let mut source = File::open("tree.tar.gz")?;
+/// let callback = |name, bytes| {
+///     println!("Read file {}: {} bytes", name, bytes.len());
+///     Continue(true)
+/// };
+///
+/// uncompress_archive_callback(&mut source, &dest)?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn uncompress_archive_callback<R, F>(source: R, callback: F) -> Result<()>
+where
+    R: Read + Seek,
+    F: Fn(String, Vec<u8>) -> Continue,
+{
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    run_with_archive(
+        Ownership::Ignore,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_EOF => return Ok(()),
+                    ffi::ARCHIVE_OK => {
+                        let src_path = CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                            .to_string_lossy()
+                            .into_owned();
+
+                        let mut target = Vec::<u8>::new();
+
+                        libarchive_write_data_block(archive_reader, &mut target)?;
+
+                        if callback(src_path, target) == Continue(false) {
+                            return Ok(());
+                        }
+                    }
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+        },
+    )
+}
+
 /// Uncompress a specific file from an archive. The `source` is used as a
 /// reader, the `target` as a writer and the `path` is the relative path for
 /// the file to be extracted from the archive.
@@ -299,7 +363,8 @@ where
                     _ => return Err(Error::from(archive_reader)),
                 }
             }
-            libarchive_write_data_block(archive_reader, target)
+            let mut target = target;
+            libarchive_write_data_block(archive_reader, &mut target)
         },
     )
 }
@@ -473,7 +538,7 @@ fn libarchive_copy_data(
 
 unsafe fn libarchive_write_data_block<W>(
     archive_reader: *mut ffi::archive,
-    mut target: W,
+    target: &mut W,
 ) -> Result<usize>
 where
     W: Write,
