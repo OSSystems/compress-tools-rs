@@ -273,7 +273,7 @@ pub struct Continue(pub bool);
 /// use std::path::Path;
 ///
 /// let mut source = File::open("tree.tar.gz")?;
-/// let callback = |name, bytes| {
+/// let callback = |name, bytes: Vec<u8>| {
 ///     println!("Read file {}: {} bytes", name, bytes.len());
 ///     Continue(true)
 /// };
