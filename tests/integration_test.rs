@@ -95,7 +95,7 @@ async fn get_a_file_from_tar_futures() {
     let mut target = Vec::default();
 
     let written =
-        futures_support::uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+        futures_support::uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
             .await
             .expect("Failed to get the file");
     assert_eq!(
@@ -115,7 +115,7 @@ async fn get_a_file_from_tar_tokio() {
     let mut target = Vec::default();
 
     let written =
-        tokio_support::uncompress_archive_file(&mut source, &mut target, &"tree/branch2/leaf")
+        tokio_support::uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
             .await
             .expect("Failed to get the file");
     assert_eq!(
