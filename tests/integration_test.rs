@@ -457,3 +457,91 @@ async fn uncompress_truncated_archive_tokio() {
         Err(Error::Unknown)
     ));
 }
+
+fn collect_iterate_results(source: std::fs::File) -> Vec<(String, usize)> {
+    let mut results = Vec::new();
+    let mut name = String::default();
+    let mut size = 0;
+
+    let mut iter = ArchiveIterator::from_read(source).expect("Failed to get the file");
+
+    for content in &mut iter {
+        match content {
+            ArchiveContents::StartOfEntry(file_name) => {
+                assert!(name.is_empty());
+                assert_eq!(size, 0);
+                name = file_name;
+            }
+            ArchiveContents::DataChunk(data) => {
+                assert!(!name.is_empty());
+                size += data.len();
+            }
+            ArchiveContents::EndOfEntry => {
+                assert!(!name.is_empty());
+                results.push((name, size));
+                name = String::default();
+                size = 0;
+            }
+            ArchiveContents::Err(e) => panic!("{:?}", e),
+        }
+    }
+
+    assert!(iter.close().is_ok());
+    assert!(name.is_empty());
+    assert_eq!(size, 0);
+
+    results
+}
+
+#[test]
+fn iterate_tar() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let contents = collect_iterate_results(source);
+
+    let expected: Vec<(String, usize)> = vec![
+        ("tree/", 0),
+        ("tree/branch1/", 0),
+        ("tree/branch1/leaf", 12),
+        ("tree/branch2/", 0),
+        ("tree/branch2/leaf", 14),
+    ]
+    .into_iter()
+    .map(|(a, b)| (a.into(), b))
+    .collect();
+
+    assert_eq!(contents, expected);
+}
+
+#[test]
+fn iterate_7z() {
+    let source = std::fs::File::open("tests/fixtures/tree.7z").unwrap();
+
+    let contents = collect_iterate_results(source);
+
+    let expected: Vec<(String, usize)> = vec![
+        ("tree/", 0),
+        ("tree/branch1/", 0),
+        ("tree/branch2/", 0),
+        ("tree/branch1/leaf", 12),
+        ("tree/branch2/leaf", 14),
+    ]
+    .into_iter()
+    .map(|(a, b)| (a.into(), b))
+    .collect();
+
+    assert_eq!(contents, expected);
+}
+
+#[test]
+fn iterate_truncated_archive() {
+    let source = std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap();
+
+    for content in ArchiveIterator::from_read(source).unwrap() {
+        if let ArchiveContents::Err(Error::Unknown) = content {
+            return;
+        }
+    }
+
+    panic!("Did not find expected error");
+}

@@ -6,9 +6,11 @@
 
 * Use "lossy" strings for invalid filenames. [#59]
 * Fix memory leak when dropping locale guard. [#64]
+* Add `ArchiveIterator` type. [#65]
 
 [#59]: https://github.com/OSSystems/compress-tools-rs/issues/59
 [#64]: https://github.com/OSSystems/compress-tools-rs/issues/64
+[#65]: https://github.com/OSSystems/compress-tools-rs/issues/65
 
 ## [0.11.2] - 2021-05-29
 
