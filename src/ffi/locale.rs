@@ -16,6 +16,7 @@ pub(crate) use inner::UTF8LocaleGuard;
 mod inner {
     pub(crate) struct UTF8LocaleGuard {
         save: libc::locale_t,
+        utf8_locale: libc::locale_t,
     }
 
     impl UTF8LocaleGuard {
@@ -36,13 +37,16 @@ mod inner {
 
             let save = unsafe { libc::uselocale(utf8_locale) };
 
-            Self { save }
+            Self { save, utf8_locale }
         }
     }
 
     impl Drop for UTF8LocaleGuard {
         fn drop(&mut self) {
-            unsafe { libc::uselocale(self.save) };
+            unsafe {
+                libc::uselocale(self.save);
+                libc::freelocale(self.utf8_locale);
+            };
         }
     }
 }
