@@ -545,3 +545,18 @@ fn iterate_truncated_archive() {
 
     panic!("Did not find expected error");
 }
+
+#[test]
+fn uncompress_archive_zip_slip_vulnerability() {
+    assert!(
+        uncompress_archive(
+            &mut std::fs::File::open("tests/fixtures/zip-slip.zip").unwrap(),
+            tempfile::TempDir::new()
+                .expect("Failed to create the tmp directory")
+                .path(),
+            Ownership::Ignore,
+        )
+        .is_err(),
+        "SECURITY ERROR: evil.txt has been uncompressed in /tmp!"
+    );
+}
