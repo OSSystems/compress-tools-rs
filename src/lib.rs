@@ -67,7 +67,7 @@ use std::{
     ffi::{CStr, CString},
     io::{self, Read, Write},
     os::raw::{c_int, c_void},
-    path::Path,
+    path::{Component, Path},
     slice,
 };
 
@@ -215,11 +215,13 @@ where
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
                         let target_path = CString::new(
-                            dest.join(
-                                CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                    .to_string_lossy()
-                                    .into_owned(),
-                            )
+                            sanetize_destination_path(
+                                &dest.join(
+                                    CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                                        .to_string_lossy()
+                                        .into_owned(),
+                                ),
+                            )?
                             .to_str()
                             .unwrap(),
                         )
@@ -230,9 +232,11 @@ where
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
                             let target_path = CString::new(
-                                dest.join(CStr::from_ptr(link_name).to_string_lossy().into_owned())
-                                    .to_str()
-                                    .unwrap(),
+                                sanetize_destination_path(&dest.join(
+                                    CStr::from_ptr(link_name).to_string_lossy().into_owned(),
+                                ))?
+                                .to_str()
+                                .unwrap(),
                             )
                             .unwrap();
 
@@ -446,6 +450,22 @@ where
 
         res
     }
+}
+
+// This ensures we're not affected by the zip-slip vulnerability. In summary, it
+// uses relative destination paths to unpack files in unexpected places.
+//
+// More details can be found at: http://snyk.io/research/zip-slip-vulnerability
+fn sanetize_destination_path(dest: &Path) -> Result<&Path> {
+    dest.components()
+        .find(|c| c == &Component::ParentDir)
+        .map_or(Ok(dest), |_| {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "cannot use relative destination directory",
+            )
+            .into())
+        })
 }
 
 fn libarchive_copy_data(
