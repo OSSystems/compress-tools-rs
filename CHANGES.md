@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.12.0] - 2021-08-03
+
 * Use "lossy" strings for invalid filenames. [#59]
 * Fix zip-slip vulnerability. [#63]
 * Fix memory leak when dropping locale guard. [#64]
