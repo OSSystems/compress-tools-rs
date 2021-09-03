@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.12.1] - 2021-09-03
+
 ## [0.12.0] - 2021-08-03
 
 * Use "lossy" strings for invalid filenames. [#59]
