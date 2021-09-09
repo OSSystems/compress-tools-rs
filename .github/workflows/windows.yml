@@ -25,11 +25,19 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install libarchive
+      - name: Install libarchive dynamic
         uses: lukka/run-vcpkg@v7.4
         with:
           vcpkgArguments: libarchive
           vcpkgTriplet: x64-windows
+          vcpkgGitCommitId: 7dbc05515b44bf54d2a42b4da9d1e1f910868b86 # master
+          useShell: true
+
+      - name: Install libarchive static
+        uses: lukka/run-vcpkg@v7.4
+        with:
+          vcpkgArguments: libarchive
+          vcpkgTriplet: x64-windows-static
           vcpkgGitCommitId: 7dbc05515b44bf54d2a42b4da9d1e1f910868b86 # master
           useShell: true
 
@@ -60,7 +68,7 @@ jobs:
           path: target
           key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Check build
+      - name: Check dynamic build
         uses: actions-rs/cargo@v1
         env:
           OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows"
@@ -69,12 +77,31 @@ jobs:
           command: check
           args: --release --all --bins --examples --tests
 
-      - name: Tests
+      - name: Check static build
+        uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows-static"
+        with:
+          command: check
+          args: --release --all --bins --examples --tests
+
+      - name: Test dynamic
         uses: actions-rs/cargo@v1
         timeout-minutes: 10
         env:
           OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows"
           VCPKGRS_DYNAMIC: 1
+        with:
+          command: test
+          args: --release --all --all-features --no-fail-fast -- --nocapture
+
+      - name: Test static
+        uses: actions-rs/cargo@v1
+        timeout-minutes: 10
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_ROOT_DIR: "D:\\a\\compress-tools\\vcpkg\\installed\\x64-windows-static"
         with:
           command: test
           args: --release --all --all-features --no-fail-fast -- --nocapture
