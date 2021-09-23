@@ -27,6 +27,8 @@ mod inner {
             #[cfg(target_os = "macos")]
             let locale = b"UTF-8\0";
 
+            // `libc::newlocale(...)` may fail in case there is no locale information in the
+            // running system
             let utf8_locale = unsafe {
                 libc::newlocale(
                     libc::LC_CTYPE_MASK,
@@ -35,7 +37,11 @@ mod inner {
                 )
             };
 
-            let save = unsafe { libc::uselocale(utf8_locale) };
+            let save = if !utf8_locale.is_null() {
+                unsafe { libc::uselocale(utf8_locale) }
+            } else {
+                std::ptr::null_mut()
+            };
 
             Self { save, utf8_locale }
         }
@@ -44,8 +50,10 @@ mod inner {
     impl Drop for UTF8LocaleGuard {
         fn drop(&mut self) {
             unsafe {
-                libc::uselocale(self.save);
-                libc::freelocale(self.utf8_locale);
+                if !self.utf8_locale.is_null() {
+                    libc::uselocale(self.save);
+                    libc::freelocale(self.utf8_locale);
+                }
             };
         }
     }
