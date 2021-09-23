@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.12.2] - 2021-09-23
+
 * Fix locale drop causing crash on a system without locale [#71]
 
 [#71]: https://github.com/OSSystems/compress-tools-rs/issues/71
