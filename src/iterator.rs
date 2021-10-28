@@ -7,7 +7,10 @@ use std::{
 
 use libc::{c_int, c_void};
 
-use crate::{error::archive_result, ffi, ffi::UTF8LocaleGuard, Error, Result, READER_BUFFER_SIZE};
+use crate::{
+    error::archive_result, ffi, ffi::UTF8LocaleGuard, DecodeCallback, Error, Result,
+    READER_BUFFER_SIZE,
+};
 
 struct HeapReadSeekerPipe<R: Read + Seek> {
     reader: R,
@@ -39,6 +42,7 @@ pub struct ArchiveIterator<R: Read + Seek> {
     archive_entry: *mut ffi::archive_entry,
     archive_reader: *mut ffi::archive,
 
+    decode: DecodeCallback,
     in_file: bool,
     closed: bool,
     error: bool,
@@ -99,7 +103,8 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     ///
     /// let mut name = String::default();
     /// let mut size = 0;
-    /// let mut iter = ArchiveIterator::from_read(file)?;
+    /// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+    /// let mut iter = ArchiveIterator::from_read_with_encoding(file, decode_utf8)?;
     ///
     /// for content in &mut iter {
     ///     match content {
@@ -119,7 +124,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn from_read(source: R) -> Result<ArchiveIterator<R>>
+    pub fn from_read_with_encoding(source: R, decode: DecodeCallback) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek + 'static,
     {
@@ -178,6 +183,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                 archive_entry,
                 archive_reader,
 
+                decode,
                 in_file: false,
                 closed: false,
                 error: false,
@@ -189,6 +195,45 @@ impl<R: Read + Seek> ArchiveIterator<R> {
             res?;
             Ok(iter)
         }
+    }
+
+    /// Iterate over the contents of an archive, streaming the contents of each
+    /// entry in small chunks.
+    ///
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// use compress_tools::*;
+    /// use std::fs::File;
+    ///
+    /// let file = File::open("tree.tar")?;
+    ///
+    /// let mut name = String::default();
+    /// let mut size = 0;
+    /// let mut iter = ArchiveIterator::from_read(file)?;
+    ///
+    /// for content in &mut iter {
+    ///     match content {
+    ///         ArchiveContents::StartOfEntry(s) => name = s,
+    ///         ArchiveContents::DataChunk(v) => size += v.len(),
+    ///         ArchiveContents::EndOfEntry => {
+    ///             println!("Entry {} was {} bytes", name, size);
+    ///             size = 0;
+    ///         }
+    ///         ArchiveContents::Err(e) => {
+    ///             Err(e)?;
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// iter.close()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_read(source: R) -> Result<ArchiveIterator<R>>
+    where
+        R: Read + Seek + 'static,
+    {
+        ArchiveIterator::from_read_with_encoding(source, crate::decode_utf8)
     }
 
     /// Close the iterator, freeing up the associated resources.
@@ -222,9 +267,9 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         match ffi::archive_read_next_header(self.archive_reader, &mut self.archive_entry) {
             ffi::ARCHIVE_EOF => ArchiveContents::EndOfEntry,
             ffi::ARCHIVE_OK => {
-                let file_name = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry))
-                    .to_string_lossy()
-                    .into_owned();
+                let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry));
+                let file_name = (self.decode)(cstr.to_bytes()).unwrap();
                 ArchiveContents::StartOfEntry(file_name)
             }
             _ => ArchiveContents::Err(Error::from(self.archive_reader)),

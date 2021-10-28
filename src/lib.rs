@@ -95,6 +95,54 @@ struct SeekableReaderPipe<'a> {
     buffer: &'a mut [u8],
 }
 
+pub type DecodeCallback = fn(&[u8]) -> Result<String>;
+
+pub(crate) fn decode_utf8(bytes: &[u8]) -> Result<String> {
+    return Ok(std::str::from_utf8(bytes)?.to_owned());
+}
+
+/// Get all files in a archive using `source` as a reader.
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar")?;
+/// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+///
+/// let file_list = list_archive_files_with_encoding(&mut source, decode_utf8)?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn list_archive_files_with_encoding<R>(source: R, decode: DecodeCallback) -> Result<Vec<String>>
+where
+    R: Read + Seek,
+{
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    run_with_archive(
+        Ownership::Ignore,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            let mut file_list = Vec::new();
+            #[allow(clippy::vec_init_then_push)]
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_OK => {
+                        let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                        let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                        let file_name = decode(cstr.to_bytes())?;
+                        file_list.push(file_name);
+                    }
+                    ffi::ARCHIVE_EOF => return Ok(file_list),
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+        },
+    )
+}
+
 /// Get all files in a archive using `source` as a reader.
 /// # Example
 ///
@@ -113,28 +161,7 @@ pub fn list_archive_files<R>(source: R) -> Result<Vec<String>>
 where
     R: Read + Seek,
 {
-    let _utf8_guard = ffi::UTF8LocaleGuard::new();
-    run_with_archive(
-        Ownership::Ignore,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            let mut file_list = Vec::new();
-            #[allow(clippy::vec_init_then_push)]
-            loop {
-                match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        file_list.push(
-                            CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                .to_string_lossy()
-                                .into_owned(),
-                        );
-                    }
-                    ffi::ARCHIVE_EOF => return Ok(file_list),
-                    _ => return Err(Error::from(archive_reader)),
-                }
-            }
-        },
-    )
+    list_archive_files_with_encoding(source, decode_utf8)
 }
 
 /// Uncompress a file using the `source` need as reader and the `target` as a
@@ -196,12 +223,18 @@ where
 ///
 /// let mut source = File::open("tree.tar.gz")?;
 /// let dest = Path::new("/tmp/dest");
+/// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
 ///
-/// uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
+/// uncompress_archive_with_encoding(&mut source, &dest, Ownership::Preserve, decode_utf8)?;
 /// # Ok(())
 /// # }
 /// ```
-pub fn uncompress_archive<R>(source: R, dest: &Path, ownership: Ownership) -> Result<()>
+pub fn uncompress_archive_with_encoding<R>(
+    source: R,
+    dest: &Path,
+    ownership: Ownership,
+    decode: DecodeCallback,
+) -> Result<()>
 where
     R: Read + Seek,
 {
@@ -214,16 +247,12 @@ where
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
+                        let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                        let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
                         let target_path = CString::new(
-                            sanetize_destination_path(
-                                &dest.join(
-                                    CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                        .to_string_lossy()
-                                        .into_owned(),
-                                ),
-                            )?
-                            .to_str()
-                            .unwrap(),
+                            sanetize_destination_path(&dest.join(decode(cstr.to_bytes())?))?
+                                .to_str()
+                                .unwrap(),
                         )
                         .unwrap();
 
@@ -232,9 +261,9 @@ where
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
                             let target_path = CString::new(
-                                sanetize_destination_path(&dest.join(
-                                    CStr::from_ptr(link_name).to_string_lossy().into_owned(),
-                                ))?
+                                sanetize_destination_path(
+                                    &dest.join(decode(CStr::from_ptr(link_name).to_bytes())?),
+                                )?
                                 .to_str()
                                 .unwrap(),
                             )
@@ -253,6 +282,90 @@ where
                     _ => return Err(Error::from(archive_reader)),
                 }
             }
+        },
+    )
+}
+
+/// Uncompress an archive using `source` as a reader and `dest` as the
+/// destination directory.
+///
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+/// use std::path::Path;
+///
+/// let mut source = File::open("tree.tar.gz")?;
+/// let dest = Path::new("/tmp/dest");
+///
+/// uncompress_archive(&mut source, &dest, Ownership::Preserve)?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn uncompress_archive<R>(source: R, dest: &Path, ownership: Ownership) -> Result<()>
+where
+    R: Read + Seek,
+{
+    uncompress_archive_with_encoding(source, dest, ownership, decode_utf8)
+}
+
+/// Uncompress a specific file from an archive. The `source` is used as a
+/// reader, the `target` as a writer and the `path` is the relative path for
+/// the file to be extracted from the archive.
+///
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar.gz")?;
+/// let mut target = Vec::default();
+/// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+///
+/// uncompress_archive_file_with_encoding(&mut source, &mut target, "file/path", decode_utf8)?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn uncompress_archive_file_with_encoding<R, W>(
+    source: R,
+    target: W,
+    path: &str,
+    decode: DecodeCallback,
+) -> Result<usize>
+where
+    R: Read + Seek,
+    W: Write,
+{
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    run_with_archive(
+        Ownership::Ignore,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_OK => {
+                        let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                        let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                        let file_name = decode(cstr.to_bytes())?;
+                        if file_name == path {
+                            break;
+                        }
+                    }
+                    ffi::ARCHIVE_EOF => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::NotFound,
+                            format!("path {} doesn't exist inside archive", path),
+                        )
+                        .into())
+                    }
+                    _ => return Err(Error::from(archive_reader)),
+                }
+            }
+            libarchive_write_data_block(archive_reader, target)
         },
     )
 }
@@ -280,34 +393,7 @@ where
     R: Read + Seek,
     W: Write,
 {
-    let _utf8_guard = ffi::UTF8LocaleGuard::new();
-    run_with_archive(
-        Ownership::Ignore,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            loop {
-                match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        let file_name = CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                            .to_string_lossy()
-                            .into_owned();
-                        if file_name == path {
-                            break;
-                        }
-                    }
-                    ffi::ARCHIVE_EOF => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotFound,
-                            format!("path {} doesn't exist inside archive", path),
-                        )
-                        .into())
-                    }
-                    _ => return Err(Error::from(archive_reader)),
-                }
-            }
-            libarchive_write_data_block(archive_reader, target)
-        },
-    )
+    uncompress_archive_file_with_encoding(source, target, path, decode_utf8)
 }
 
 fn run_with_archive<F, R, T>(ownership: Ownership, mut reader: R, f: F) -> Result<T>
@@ -547,7 +633,7 @@ unsafe extern "C" fn libarchive_seekable_read_callback(
 
     *buffer = pipe.buffer.as_ptr() as *const c_void;
 
-    match pipe.reader.read(&mut pipe.buffer) {
+    match pipe.reader.read(pipe.buffer) {
         Ok(size) => size as ffi::la_ssize_t,
         Err(e) => {
             let description = CString::new(e.to_string()).unwrap();
@@ -568,7 +654,7 @@ unsafe extern "C" fn libarchive_read_callback(
 
     *buffer = pipe.buffer.as_ptr() as *const c_void;
 
-    match pipe.reader.read(&mut pipe.buffer) {
+    match pipe.reader.read(pipe.buffer) {
         Ok(size) => size as ffi::la_ssize_t,
         Err(e) => {
             let description = CString::new(e.to_string()).unwrap();

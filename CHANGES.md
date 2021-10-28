@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Add `_with_encoding` suffix method. [#59]
+
 ## [0.12.2] - 2021-09-23
 
 * Fix locale drop causing crash on a system without locale [#71]

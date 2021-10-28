@@ -6,4 +6,4 @@ mod generated;
 mod locale;
 
 pub(crate) use crate::ffi::generated::*;
-pub(crate) use locale::UTF8LocaleGuard;
+pub(crate) use locale::{UTF8LocaleGuard, WindowsUTF8LocaleGuard};

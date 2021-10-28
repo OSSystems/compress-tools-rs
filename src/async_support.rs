@@ -5,7 +5,7 @@
 //! Generic async support with which you can use you own thread pool by
 //! implementing the [`BlockingExecutor`] trait.
 
-use crate::{Ownership, Result, READER_BUFFER_SIZE};
+use crate::{DecodeCallback, Ownership, Result, READER_BUFFER_SIZE};
 use async_trait::async_trait;
 use futures_channel::mpsc::{channel, Receiver, Sender};
 use futures_core::FusedStream;
@@ -149,6 +149,24 @@ where
     join.2
 }
 
+/// Async version of
+/// [`list_archive_files_with_encoding`](crate::
+/// list_archive_files_with_encoding).
+pub async fn list_archive_files_with_encoding<B, R>(
+    blocking_executor: B,
+    source: R,
+    decode: DecodeCallback,
+) -> Result<Vec<String>>
+where
+    B: BlockingExecutor,
+    R: AsyncRead + Unpin,
+{
+    wrap_async_read(blocking_executor, source, move |source| {
+        crate::list_archive_files_with_encoding(source, decode)
+    })
+    .await?
+}
+
 /// Async version of [`list_archive_files`](crate::list_archive_files).
 pub async fn list_archive_files<B, R>(blocking_executor: B, source: R) -> Result<Vec<String>>
 where
@@ -171,6 +189,27 @@ where
     .await?
 }
 
+/// Async version of
+/// [`uncompress_archive_with_encoding`](crate::
+/// uncompress_archive_with_encoding).
+pub async fn uncompress_archive_with_encoding<B, R>(
+    blocking_executor: B,
+    source: R,
+    dest: &Path,
+    ownership: Ownership,
+    decode: DecodeCallback,
+) -> Result<()>
+where
+    B: BlockingExecutor,
+    R: AsyncRead + Unpin,
+{
+    let dest = dest.to_owned();
+    wrap_async_read(blocking_executor, source, move |source| {
+        crate::uncompress_archive_with_encoding(source, &dest, ownership, decode)
+    })
+    .await?
+}
+
 /// Async version of [`uncompress_archive`](crate::uncompress_archive).
 pub async fn uncompress_archive<B, R>(
     blocking_executor: B,
@@ -185,6 +224,28 @@ where
     let dest = dest.to_owned();
     wrap_async_read(blocking_executor, source, move |source| {
         crate::uncompress_archive(source, &dest, ownership)
+    })
+    .await?
+}
+
+/// Async version of
+/// [`uncompress_archive_file_with_encoding`](crate::
+/// uncompress_archive_file_with_encoding).
+pub async fn uncompress_archive_file_with_encoding<B, R, W>(
+    blocking_executor: B,
+    source: R,
+    target: W,
+    path: &str,
+    decode: DecodeCallback,
+) -> Result<usize>
+where
+    B: BlockingExecutor,
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
+{
+    let path = path.to_owned();
+    wrap_async_read_and_write(blocking_executor, source, target, move |source, target| {
+        crate::uncompress_archive_file_with_encoding(source, target, &path, decode)
     })
     .await?
 }
