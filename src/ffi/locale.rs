@@ -4,13 +4,15 @@
 
 /// Change from the C to system locale, allowing libarchive to handle filenames
 /// in UTF-8. We restrict to change LC_CTYPE only, since libarchive only needs
-/// the charset set.
+/// the charset set. The timing of locale setting for Unix and Windows is
+/// different, handle them separately.
 ///
 /// See on libarchive Website for a more complete description of the issue:
 ///
 ///   https://github.com/libarchive/libarchive/issues/587
 ///   https://github.com/libarchive/libarchive/wiki/Filenames
 pub(crate) use inner::UTF8LocaleGuard;
+pub(crate) use inner::WindowsUTF8LocaleGuard;
 
 #[cfg(unix)]
 mod inner {
@@ -18,6 +20,8 @@ mod inner {
         save: libc::locale_t,
         utf8_locale: libc::locale_t,
     }
+
+    pub(crate) struct WindowsUTF8LocaleGuard {}
 
     impl UTF8LocaleGuard {
         pub(crate) fn new() -> Self {
@@ -55,6 +59,12 @@ mod inner {
             };
         }
     }
+
+    impl WindowsUTF8LocaleGuard {
+        pub(crate) fn new() -> Self {
+            Self {}
+        }
+    }
 }
 
 #[cfg(windows)]
@@ -64,12 +74,20 @@ mod inner {
     }
     const _ENABLE_PER_THREAD_LOCALE: std::os::raw::c_int = 1;
 
-    pub(crate) struct UTF8LocaleGuard {
+    pub(crate) struct UTF8LocaleGuard {}
+
+    pub(crate) struct WindowsUTF8LocaleGuard {
         save: Option<std::ffi::CString>,
         save_thread_config: ::std::os::raw::c_int,
     }
 
     impl UTF8LocaleGuard {
+        pub(crate) fn new() -> Self {
+            Self {}
+        }
+    }
+
+    impl WindowsUTF8LocaleGuard {
         pub(crate) fn new() -> Self {
             let locale = b".UTF-8\0";
 
@@ -100,7 +118,7 @@ mod inner {
         }
     }
 
-    impl Drop for UTF8LocaleGuard {
+    impl Drop for WindowsUTF8LocaleGuard {
         fn drop(&mut self) {
             if let Some(locale) = &self.save {
                 unsafe { libc::setlocale(libc::LC_CTYPE, locale.as_ptr()) };

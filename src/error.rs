@@ -4,7 +4,7 @@
 
 use crate::ffi;
 use derive_more::{Display, Error, From};
-use std::{ffi::CStr, io};
+use std::{borrow::Cow, ffi::CStr, io};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -15,6 +15,11 @@ pub enum Error {
     Extraction(#[error(not(source))] String),
 
     Io(io::Error),
+
+    Utf(std::str::Utf8Error),
+
+    #[display(fmt = "Encoding error: '{}'", _0)]
+    Encoding(#[error(not(source))] Cow<'static, str>),
 
     #[cfg(feature = "tokio_support")]
     JoinError(tokio::task::JoinError),

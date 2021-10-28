@@ -345,6 +345,55 @@ fn uncompress_to_dir_with_utf8_pathname() {
 }
 
 #[test]
+fn uncompress_to_dir_with_cjk_pathname() {
+    use encoding::{all::*, DecoderTrap, Encoding};
+
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let mut source_utf8 = std::fs::File::open("tests/fixtures/encoding-utf8.zip").unwrap();
+    let mut source_gbk = std::fs::File::open("tests/fixtures/encoding-gbk.zip").unwrap();
+    let mut source_sjis = std::fs::File::open("tests/fixtures/encoding-sjis.zip").unwrap();
+    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
+    let decode_sjis = |bytes: &[u8]| Ok(WINDOWS_31J.decode(bytes, DecoderTrap::Strict)?);
+
+    uncompress_archive_with_encoding(&mut source_utf8, dir.path(), Ownership::Ignore, decode_utf8)
+        .expect("Failed to uncompress the file");
+    uncompress_archive_with_encoding(&mut source_gbk, dir.path(), Ownership::Ignore, decode_gbk)
+        .expect("Failed to uncompress the file");
+    uncompress_archive_with_encoding(&mut source_sjis, dir.path(), Ownership::Ignore, decode_sjis)
+        .expect("Failed to uncompress the file");
+
+    let read_to_bytes = |path: std::path::PathBuf| {
+        use std::io::prelude::*;
+        let mut file = std::fs::File::open(path).unwrap();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+        buffer
+    };
+    let utf8_filepath = dir.path().join("encoding-utf8-chinese-中文.txt");
+    let gbk_filepath = dir.path().join("encoding-gbk-chinese-中文.txt");
+    let sjis_filepath = dir.path().join("encoding-sjis-japanese-日本語.txt");
+
+    assert!(utf8_filepath.exists(), "the path doesn't exist");
+    assert!(gbk_filepath.exists(), "the path doesn't exist");
+    assert!(sjis_filepath.exists(), "the path doesn't exist");
+    assert_eq!(
+        decode_utf8(&read_to_bytes(utf8_filepath)).unwrap(),
+        "0123456789中文示例",
+        "Uncompressed file did not match"
+    );
+    assert_eq!(
+        decode_gbk(&read_to_bytes(gbk_filepath)).unwrap(),
+        "0123456789中文示例",
+        "Uncompressed file did not match"
+    );
+    assert_eq!(
+        decode_sjis(&read_to_bytes(sjis_filepath)).unwrap(),
+        "0123456789日本語の例",
+        "Uncompressed file did not match"
+    );
+}
+
+#[test]
 fn uncompress_same_file_not_preserve_owner() {
     uncompress_archive(
         &mut std::fs::File::open("tests/fixtures/tree.tar").unwrap(),
@@ -459,12 +508,20 @@ async fn uncompress_truncated_archive_tokio() {
     ));
 }
 
-fn collect_iterate_results(source: std::fs::File) -> Vec<(String, usize)> {
+fn decode_utf8(bytes: &[u8]) -> Result<String> {
+    Ok(std::str::from_utf8(bytes)?.to_owned())
+}
+
+fn collect_iterate_results_with_encoding(
+    source: std::fs::File,
+    decode: DecodeCallback,
+) -> Vec<(String, usize)> {
     let mut results = Vec::new();
     let mut name = String::default();
     let mut size = 0;
 
-    let mut iter = ArchiveIterator::from_read(source).expect("Failed to get the file");
+    let mut iter =
+        ArchiveIterator::from_read_with_encoding(source, decode).expect("Failed to get the file");
 
     for content in &mut iter {
         match content {
@@ -492,6 +549,10 @@ fn collect_iterate_results(source: std::fs::File) -> Vec<(String, usize)> {
     assert_eq!(size, 0);
 
     results
+}
+
+fn collect_iterate_results(source: std::fs::File) -> Vec<(String, usize)> {
+    collect_iterate_results_with_encoding(source, decode_utf8)
 }
 
 #[test]
@@ -526,6 +587,29 @@ fn iterate_7z() {
         ("tree/branch2/", 0),
         ("tree/branch1/leaf", 12),
         ("tree/branch2/leaf", 14),
+    ]
+    .into_iter()
+    .map(|(a, b)| (a.into(), b))
+    .collect();
+
+    assert_eq!(contents, expected);
+}
+
+#[test]
+fn iterate_zip_with_cjk_pathname() {
+    use encoding::{all::*, DecoderTrap, Encoding};
+
+    let source = std::fs::File::open("tests/fixtures/encoding-gbk-tree.zip").unwrap();
+
+    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
+    let contents = collect_iterate_results_with_encoding(source, decode_gbk);
+
+    let expected: Vec<(String, usize)> = vec![
+        ("tree/", 0),
+        ("tree/branch1/", 0),
+        ("tree/branch1/leaf1-encoding-gbk-chinese-中文.txt", 18),
+        ("tree/branch2/", 0),
+        ("tree/branch2/leaf2-encoding-gbk-chinese-中文.txt", 12),
     ]
     .into_iter()
     .map(|(a, b)| (a.into(), b))
