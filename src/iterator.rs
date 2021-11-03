@@ -27,7 +27,7 @@ struct HeapReadSeekerPipe<R: Read + Seek> {
 /// completion.
 pub enum ArchiveContents {
     /// Marks the start of an entry, either a file or a directory.
-    StartOfEntry(String),
+    StartOfEntry(String, libc::stat),
     /// A chunk of uncompressed data from the entry. Entries may have zero or
     /// more chunks.
     DataChunk(Vec<u8>),
@@ -66,7 +66,7 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
         };
 
         match &next {
-            ArchiveContents::StartOfEntry(_) => {
+            ArchiveContents::StartOfEntry(..) => {
                 self.in_file = true;
                 Some(next)
             }
@@ -108,7 +108,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     ///
     /// for content in &mut iter {
     ///     match content {
-    ///         ArchiveContents::StartOfEntry(s) => name = s,
+    ///         ArchiveContents::StartOfEntry(s, _) => name = s,
     ///         ArchiveContents::DataChunk(v) => size += v.len(),
     ///         ArchiveContents::EndOfEntry => {
     ///             println!("Entry {} was {} bytes", name, size);
@@ -213,7 +213,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     ///
     /// for content in &mut iter {
     ///     match content {
-    ///         ArchiveContents::StartOfEntry(s) => name = s,
+    ///         ArchiveContents::StartOfEntry(s, _) => name = s,
     ///         ArchiveContents::DataChunk(v) => size += v.len(),
     ///         ArchiveContents::EndOfEntry => {
     ///             println!("Entry {} was {} bytes", name, size);
@@ -270,7 +270,8 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
                 let cstr = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry));
                 let file_name = (self.decode)(cstr.to_bytes()).unwrap();
-                ArchiveContents::StartOfEntry(file_name)
+                let stat = *ffi::archive_entry_stat(self.archive_entry);
+                ArchiveContents::StartOfEntry(file_name, stat)
             }
             _ => ArchiveContents::Err(Error::from(self.archive_reader)),
         }
