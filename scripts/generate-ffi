@@ -25,6 +25,7 @@ bindgen \
     --size_t-is-usize \
     \
     --raw-line "#![allow(non_camel_case_types)]" \
+    --raw-line "use libc::stat;" \
     --raw-line "pub const ARCHIVE_EOF: i32 = 1;" \
     --raw-line "pub const ARCHIVE_OK: i32 = 0;" \
     \
@@ -60,6 +61,9 @@ bindgen \
     --whitelist-function "archive_entry_set_pathname" \
     --whitelist-function "archive_entry_set_hardlink" \
     --whitelist-function "archive_entry_hardlink" \
+    --blocklist-type "stat" \
+    --blacklist-type "timespec" \
+    --whitelist-function "archive_entry_stat" \
     --whitelist-function "archive_set_error" \
     --whitelist-function "archive_error_string" \
     --whitelist-function "archive_errno" \
