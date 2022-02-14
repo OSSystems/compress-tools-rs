@@ -547,7 +547,7 @@ unsafe extern "C" fn libarchive_seekable_read_callback(
 
     *buffer = pipe.buffer.as_ptr() as *const c_void;
 
-    match pipe.reader.read(&mut pipe.buffer) {
+    match pipe.reader.read(pipe.buffer) {
         Ok(size) => size as ffi::la_ssize_t,
         Err(e) => {
             let description = CString::new(e.to_string()).unwrap();
@@ -568,7 +568,7 @@ unsafe extern "C" fn libarchive_read_callback(
 
     *buffer = pipe.buffer.as_ptr() as *const c_void;
 
-    match pipe.reader.read(&mut pipe.buffer) {
+    match pipe.reader.read(pipe.buffer) {
         Ok(size) => size as ffi::la_ssize_t,
         Err(e) => {
             let description = CString::new(e.to_string()).unwrap();
