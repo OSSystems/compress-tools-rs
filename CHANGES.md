@@ -4,6 +4,7 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Raise MSRV to 1.49.0
 * Upgrade tokio-util to 0.7.0
 
 ## [0.12.2] - 2021-09-23

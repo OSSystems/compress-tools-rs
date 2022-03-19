@@ -11,6 +11,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 edition = "2018"
 build = "src/build.rs"
+rust-version = "1.49.0"
 
 [package.metadata.docs.rs]
 all-features = true

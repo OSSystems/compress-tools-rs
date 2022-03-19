@@ -24,7 +24,7 @@ system in order to use this. If building on *nix and Windows GNU
 systems, `pkg-config` is used to locate the `libarchive`; on Windows
 MSVC, `vcpkg` will be used to locating the `libarchive`.
 
-The minimum supported Rust version is 1.46.
+The minimum supported Rust version is 1.49.
 
 ## Features
 
