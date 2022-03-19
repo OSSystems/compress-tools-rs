@@ -4,8 +4,11 @@
 
 ## [Unreleased] - ReleaseDate
 
+* ci: windows: Update vcpkg to 2022.03.10 and use run-vcpkg@v10 [#81]
 * Raise MSRV to 1.49.0
 * Upgrade tokio-util to 0.7.0
+
+[#81]: https://github.com/OSSystems/compress-tools-rs/issues/81
 
 ## [0.12.2] - 2021-09-23
 
