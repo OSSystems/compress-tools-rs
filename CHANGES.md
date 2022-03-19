@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Upgrade tokio-util to 0.7.0
+
 ## [0.12.2] - 2021-09-23
 
 * Fix locale drop causing crash on a system without locale [#71]
