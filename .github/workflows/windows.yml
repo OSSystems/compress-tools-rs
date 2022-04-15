@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 1.46.0 # MSRV
+          - 1.49.0 # MSRV
           - stable
           - nightly
         linkage:
@@ -28,13 +28,26 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install libarchive
-        uses: lukka/run-vcpkg@v7.4
+      - name: Cache vcpkg installed
+        uses: actions/cache@v1.0.3
         with:
-          vcpkgArguments: libarchive
-          vcpkgTriplet: ${{ matrix.linkage }}
-          vcpkgGitCommitId: 7dbc05515b44bf54d2a42b4da9d1e1f910868b86 # master
-          useShell: true
+          path: $VCPKG_ROOT/installed
+          key: ${{ runner.os }}-vcpkg-cache-${{ matrix.linkage }}
+        env:
+          VCPKG_ROOT: 'C:\vcpkg'
+
+      - name: Cache vcpkg downloads
+        uses: actions/cache@v1.0.3
+        with:
+          path: $VCPKG_ROOT/downloads
+          key: ${{ runner.os }}-vcpkg-cache-${{ matrix.linkage }}
+        env:
+          VCPKG_ROOT: 'C:\vcpkg'
+
+      - name: Install dependencies Windows
+        run: vcpkg integrate install; vcpkg install libarchive:${{ matrix.linkage }}
+        env:
+          VCPKG_ROOT: 'C:\vcpkg'
 
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
@@ -67,8 +80,8 @@ jobs:
         uses: actions-rs/cargo@v1
         env:
           RUSTFLAGS: ${{ matrix.linkage == 'x64-windows-static' && '-C target-feature=+crt-static' || '' }}
-          OPENSSL_ROOT_DIR: 'D:\\a\\compress-tools\\vcpkg\\installed\\${{ matrix.linkage }}'
           VCPKGRS_DYNAMIC: ${{ matrix.linkage == 'x64-windows' && 1 || 0 }}
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.linkage }}
         with:
           command: check
           args: --release --all --bins --examples --tests
@@ -78,8 +91,8 @@ jobs:
         timeout-minutes: 10
         env:
           RUSTFLAGS: ${{ matrix.linkage == 'x64-windows-static' && '-C target-feature=+crt-static' || '' }}
-          OPENSSL_ROOT_DIR: 'D:\\a\\compress-tools\\vcpkg\\installed\\${{ matrix.linkage }}'
           VCPKGRS_DYNAMIC: ${{ matrix.linkage == 'x64-windows' && 1 || 0 }}
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.linkage }}
         with:
           command: test
           args: --release --all --all-features --no-fail-fast -- --nocapture
