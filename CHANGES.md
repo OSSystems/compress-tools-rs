@@ -7,8 +7,10 @@
 * ci: windows: Use pre-installed vcpkg and fix build [#81]
 * Raise MSRV to 1.49.0
 * Upgrade tokio-util to 0.7.0
+* Fix absolute paths being extracted outside of destination directory [#83]
 
 [#81]: https://github.com/OSSystems/compress-tools-rs/issues/81
+[#83]: https://github.com/OSSystems/compress-tools-rs/issues/83
 
 ## [0.12.2] - 2021-09-23
 
