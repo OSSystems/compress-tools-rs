@@ -215,15 +215,18 @@ where
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
                         let target_path = CString::new(
-                            sanetize_destination_path(
-                                &dest.join(
-                                    CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                        .to_string_lossy()
-                                        .into_owned(),
-                                ),
-                            )?
-                            .to_str()
-                            .unwrap(),
+                            dest
+                                .join(
+                                    sanitize_destination_path(
+                                        Path::new(
+                                            &CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                                                .to_string_lossy()
+                                                .into_owned(),
+                                        ),
+                                    )?,
+                                )
+                                .to_str()
+                                .unwrap(),
                         )
                         .unwrap();
 
@@ -232,9 +235,9 @@ where
                         let link_name = ffi::archive_entry_hardlink(entry);
                         if !link_name.is_null() {
                             let target_path = CString::new(
-                                sanetize_destination_path(&dest.join(
-                                    CStr::from_ptr(link_name).to_string_lossy().into_owned(),
-                                ))?
+                                dest.join(sanitize_destination_path(Path::new(
+                                    &CStr::from_ptr(link_name).to_string_lossy().into_owned(),
+                                ))?)
                                 .to_str()
                                 .unwrap(),
                             )
@@ -453,10 +456,16 @@ where
 }
 
 // This ensures we're not affected by the zip-slip vulnerability. In summary, it
-// uses relative destination paths to unpack files in unexpected places.
+// uses relative destination paths to unpack files in unexpected places. This
+// also handles absolute paths, where the leading '/' will be stripped, matching
+// behaviour from gnu tar and bsdtar.
 //
 // More details can be found at: http://snyk.io/research/zip-slip-vulnerability
-fn sanetize_destination_path(dest: &Path) -> Result<&Path> {
+fn sanitize_destination_path(mut dest: &Path) -> Result<&Path> {
+    if dest.starts_with("/") {
+        dest = dest.strip_prefix("/").unwrap_or(dest);
+    }
+
     dest.components()
         .find(|c| c == &Component::ParentDir)
         .map_or(Ok(dest), |_| {

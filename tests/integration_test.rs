@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use compress_tools::*;
+use std::path::Path;
 
 #[test]
 fn get_compressed_file_content() {
@@ -559,4 +560,26 @@ fn uncompress_archive_zip_slip_vulnerability() {
         .is_err(),
         "SECURITY ERROR: evil.txt has been uncompressed in /tmp!"
     );
+}
+
+#[test]
+fn uncompress_archive_absolute_path() {
+    let temp_dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let dest = temp_dir.path();
+
+    let correct_dest = dest.join("test.txt");
+    let incorrect_dest = Path::new("/test.txt");
+
+    assert!(
+        uncompress_archive(
+            &mut std::fs::File::open("tests/fixtures/absolute-path.tar").unwrap(),
+            dest,
+            Ownership::Ignore,
+        )
+        .is_ok(),
+        "SECURITY ERROR: test.txt has been uncompressed in /!"
+    );
+
+    assert!(correct_dest.exists());
+    assert!(!Path::new(incorrect_dest).exists());
 }
