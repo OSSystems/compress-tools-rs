@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.12.3] - 2022-06-22
+
 * ci: windows: Use pre-installed vcpkg and fix build [#81]
 * Raise MSRV to 1.49.0
 * Upgrade tokio-util to 0.7.0
