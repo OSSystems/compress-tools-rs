@@ -583,3 +583,17 @@ fn uncompress_archive_absolute_path() {
     assert!(correct_dest.exists());
     assert!(!Path::new(incorrect_dest).exists());
 }
+
+#[test]
+fn uncompress_arch_file_db() {
+    let mut source = std::fs::File::open("tests/fixtures/arch-file-db.tgz").unwrap();
+    let dest = tempfile::TempDir::new()
+        .expect("Failed to create the tmp directory");
+
+    uncompress_archive(&mut source, dest.path(), Ownership::Ignore).expect("Failed to uncompress the file while ignoring ownership");
+
+    let dest = tempfile::TempDir::new()
+        .expect("Failed to create the tmp directory");
+
+    uncompress_archive(&mut source, dest.path(), Ownership::Preserve).expect("Failed to uncompress the file while preserving ownership");
+}
