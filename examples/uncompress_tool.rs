@@ -6,14 +6,14 @@ use argh::FromArgs;
 use compress_tools::*;
 use std::path::Path;
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 /// Top-level command.
 struct TopLevel {
     #[argh(subcommand)]
     nested: CmdLine,
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 #[argh(subcommand)]
 enum CmdLine {
     ListArchiveFiles(SubCommandListArchiveFiles),
@@ -22,7 +22,7 @@ enum CmdLine {
     UncompressArchive(SubCommandUncompressArchive),
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 /// Uncompress data subcommand.
 #[argh(subcommand, name = "uncompress-data")]
 struct SubCommandUncompressData {
@@ -35,7 +35,7 @@ struct SubCommandUncompressData {
     target_path: String,
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 /// Uncompress archive file subcommand.
 #[argh(subcommand, name = "uncompress-archive-file")]
 struct SubCommandUncompressArchiveFile {
@@ -52,7 +52,7 @@ struct SubCommandUncompressArchiveFile {
     target_file: String,
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 /// Uncompress archive subcommand.
 #[argh(subcommand, name = "uncompress-archive")]
 struct SubCommandUncompressArchive {
@@ -69,7 +69,7 @@ struct SubCommandUncompressArchive {
     preserve_ownership: bool,
 }
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, PartialEq, Eq, Debug)]
 /// List archive files subcommand.
 #[argh(subcommand, name = "list-archive-files")]
 struct SubCommandListArchiveFiles {
