@@ -215,18 +215,13 @@ where
                     ffi::ARCHIVE_EOF => return Ok(()),
                     ffi::ARCHIVE_OK => {
                         let target_path = CString::new(
-                            dest
-                                .join(
-                                    sanitize_destination_path(
-                                        Path::new(
-                                            &CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                                .to_string_lossy()
-                                                .into_owned(),
-                                        ),
-                                    )?,
-                                )
-                                .to_str()
-                                .unwrap(),
+                            dest.join(sanitize_destination_path(Path::new(
+                                &CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                                    .to_string_lossy()
+                                    .into_owned(),
+                            ))?)
+                            .to_str()
+                            .unwrap(),
                         )
                         .unwrap();
 
