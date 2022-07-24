@@ -456,10 +456,8 @@ where
 // behaviour from gnu tar and bsdtar.
 //
 // More details can be found at: http://snyk.io/research/zip-slip-vulnerability
-fn sanitize_destination_path(mut dest: &Path) -> Result<&Path> {
-    if dest.starts_with("/") {
-        dest = dest.strip_prefix("/").unwrap_or(dest);
-    }
+fn sanitize_destination_path(dest: &Path) -> Result<&Path> {
+    let dest = dest.strip_prefix("/").unwrap_or(dest);
 
     dest.components()
         .find(|c| c == &Component::ParentDir)
