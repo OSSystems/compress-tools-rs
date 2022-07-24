@@ -28,6 +28,8 @@ bindgen \
     --raw-line "pub const ARCHIVE_EOF: i32 = 1;" \
     --raw-line "pub const ARCHIVE_OK: i32 = 0;" \
     \
+    --whitelist-var "ARCHIVE_WARN" \
+    \
     --whitelist-var "ARCHIVE_EXTRACT_TIME" \
     --whitelist-var "ARCHIVE_EXTRACT_PERM" \
     --whitelist-var "ARCHIVE_EXTRACT_ACL" \

@@ -4,6 +4,7 @@
 pub(crate) const ARCHIVE_EOF: i32 = 1;
 pub(crate) const ARCHIVE_OK: i32 = 0;
 
+pub(crate) const ARCHIVE_WARN: i32 = -20;
 pub(crate) const ARCHIVE_EXTRACT_OWNER: u32 = 1;
 pub(crate) const ARCHIVE_EXTRACT_PERM: u32 = 2;
 pub(crate) const ARCHIVE_EXTRACT_TIME: u32 = 4;

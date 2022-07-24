@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Avoid failing uncompressing files in case of ARCHIVE_WARN returns [#85]
+
+[#85]: https://github.com/OSSystems/compress-tools-rs/issues/85
+
 ## [0.12.3] - 2022-06-22
 
 * ci: windows: Use pre-installed vcpkg and fix build [#81]
