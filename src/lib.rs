@@ -213,44 +213,43 @@ where
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
                     ffi::ARCHIVE_EOF => return Ok(()),
-                    ffi::ARCHIVE_OK => {
-                        let target_path = CString::new(
-                            dest.join(sanitize_destination_path(Path::new(
-                                &CStr::from_ptr(ffi::archive_entry_pathname(entry))
-                                    .to_string_lossy()
-                                    .into_owned(),
-                            ))?)
-                            .to_str()
-                            .unwrap(),
-                        )
-                        .unwrap();
-
-                        ffi::archive_entry_set_pathname(entry, target_path.as_ptr());
-
-                        let link_name = ffi::archive_entry_hardlink(entry);
-                        if !link_name.is_null() {
-                            let target_path = CString::new(
-                                dest.join(sanitize_destination_path(Path::new(
-                                    &CStr::from_ptr(link_name).to_string_lossy().into_owned(),
-                                ))?)
-                                .to_str()
-                                .unwrap(),
-                            )
-                            .unwrap();
-
-                            ffi::archive_entry_set_hardlink(entry, target_path.as_ptr());
-                        }
-
-                        ffi::archive_write_header(archive_writer, entry);
-                        libarchive_copy_data(archive_reader, archive_writer)?;
-
-                        archive_result(
-                            ffi::archive_write_finish_entry(archive_writer),
-                            archive_writer,
-                        )?;
-                    }
-                    _ => return Err(Error::from(archive_reader)),
+                    value => archive_result(value, archive_reader)?,
                 }
+
+                let target_path = CString::new(
+                    dest.join(sanitize_destination_path(Path::new(
+                        &CStr::from_ptr(ffi::archive_entry_pathname(entry))
+                            .to_string_lossy()
+                            .into_owned(),
+                    ))?)
+                    .to_str()
+                    .unwrap(),
+                )
+                .unwrap();
+
+                ffi::archive_entry_set_pathname(entry, target_path.as_ptr());
+
+                let link_name = ffi::archive_entry_hardlink(entry);
+                if !link_name.is_null() {
+                    let target_path = CString::new(
+                        dest.join(sanitize_destination_path(Path::new(
+                            &CStr::from_ptr(link_name).to_string_lossy().into_owned(),
+                        ))?)
+                        .to_str()
+                        .unwrap(),
+                    )
+                    .unwrap();
+
+                    ffi::archive_entry_set_hardlink(entry, target_path.as_ptr());
+                }
+
+                ffi::archive_write_header(archive_writer, entry);
+                libarchive_copy_data(archive_reader, archive_writer)?;
+
+                archive_result(
+                    ffi::archive_write_finish_entry(archive_writer),
+                    archive_writer,
+                )?;
             }
         },
     )
