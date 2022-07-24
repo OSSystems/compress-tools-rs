@@ -244,9 +244,10 @@ where
                         ffi::archive_write_header(archive_writer, entry);
                         libarchive_copy_data(archive_reader, archive_writer)?;
 
-                        if ffi::archive_write_finish_entry(archive_writer) != ffi::ARCHIVE_OK {
-                            return Err(Error::from(archive_writer));
-                        }
+                        archive_result(
+                            ffi::archive_write_finish_entry(archive_writer),
+                            archive_writer,
+                        )?;
                     }
                     _ => return Err(Error::from(archive_reader)),
                 }

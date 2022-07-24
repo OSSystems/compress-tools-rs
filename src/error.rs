@@ -27,11 +27,10 @@ pub enum Error {
 }
 
 pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<()> {
-    if value != ffi::ARCHIVE_OK {
-        return Err(Error::from(archive));
+    match value {
+        ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => Ok(()),
+        _ => Err(Error::from(archive)),
     }
-
-    Ok(())
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
