@@ -124,18 +124,16 @@ where
         source,
         |archive_reader, _, mut entry| unsafe {
             let mut file_list = Vec::new();
-            #[allow(clippy::vec_init_then_push)]
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                        let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
-                        let file_name = decode(cstr.to_bytes())?;
-                        file_list.push(file_name);
-                    }
                     ffi::ARCHIVE_EOF => return Ok(file_list),
-                    _ => return Err(Error::from(archive_reader)),
+                    value => archive_result(value, archive_reader)?,
                 }
+
+                let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let file_name = decode(cstr.to_bytes())?;
+                file_list.push(file_name);
             }
         },
     )
@@ -347,24 +345,21 @@ where
         |archive_reader, _, mut entry| unsafe {
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_OK => {
-                        let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                        let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
-                        let file_name = decode(cstr.to_bytes())?;
-                        if file_name == path {
-                            break;
-                        }
-                    }
-                    ffi::ARCHIVE_EOF => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::NotFound,
-                            format!("path {} doesn't exist inside archive", path),
-                        )
-                        .into())
-                    }
-                    _ => return Err(Error::from(archive_reader)),
+                    ffi::ARCHIVE_EOF => Err(io::Error::new(
+                        io::ErrorKind::NotFound,
+                        format!("path {} doesn't exist inside archive", path),
+                    ))?,
+                    value => archive_result(value, archive_reader)?,
+                }
+
+                let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let file_name = decode(cstr.to_bytes())?;
+                if file_name == path {
+                    break;
                 }
             }
+
             libarchive_write_data_block(archive_reader, target)
         },
     )
@@ -571,14 +566,13 @@ fn libarchive_copy_data(
             match ffi::archive_read_data_block(archive_reader, &mut buffer, &mut size, &mut offset)
             {
                 ffi::ARCHIVE_EOF => return Ok(()),
-                ffi::ARCHIVE_OK => {
-                    archive_result(
-                        ffi::archive_write_data_block(archive_writer, buffer, size, offset) as i32,
-                        archive_writer,
-                    )?;
-                }
-                _ => return Err(Error::from(archive_reader)),
+                value => archive_result(value, archive_reader)?,
             }
+
+            archive_result(
+                ffi::archive_write_data_block(archive_writer, buffer, size, offset) as i32,
+                archive_writer,
+            )?;
         }
     }
 }
@@ -598,13 +592,12 @@ where
     loop {
         match ffi::archive_read_data_block(archive_reader, &mut buffer, &mut size, &mut offset) {
             ffi::ARCHIVE_EOF => return Ok(written),
-            ffi::ARCHIVE_OK => {
-                let content = slice::from_raw_parts(buffer as *const u8, size);
-                target.write_all(content)?;
-                written += size;
-            }
-            _ => return Err(Error::from(archive_reader)),
+            value => archive_result(value, archive_reader)?,
         }
+
+        let content = slice::from_raw_parts(buffer as *const u8, size);
+        target.write_all(content)?;
+        written += size;
     }
 }
 

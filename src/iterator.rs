@@ -266,7 +266,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     unsafe fn next_header(&mut self) -> ArchiveContents {
         match ffi::archive_read_next_header(self.archive_reader, &mut self.archive_entry) {
             ffi::ARCHIVE_EOF => ArchiveContents::EndOfEntry,
-            ffi::ARCHIVE_OK => {
+            ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => {
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
                 let cstr = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry));
                 let file_name = (self.decode)(cstr.to_bytes()).unwrap();
@@ -285,7 +285,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         match ffi::archive_read_data_block(self.archive_reader, &mut buffer, &mut size, &mut offset)
         {
             ffi::ARCHIVE_EOF => ArchiveContents::EndOfEntry,
-            ffi::ARCHIVE_OK => {
+            ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => {
                 let content = slice::from_raw_parts(buffer as *const u8, size);
                 let write = target.write_all(content);
                 if let Err(e) = write {
