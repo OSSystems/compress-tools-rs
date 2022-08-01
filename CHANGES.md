@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.12.4] - 2022-08-01
+
 * Avoid failing uncompressing files in case of ARCHIVE_WARN returns [#85]
 * Add `_with_encoding` suffix method. [#59]
 
