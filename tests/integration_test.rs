@@ -544,7 +544,7 @@ fn collect_iterate_results_with_encoding(
         }
     }
 
-    assert!(iter.close().is_ok());
+    iter.close().unwrap();
     assert!(name.is_empty());
     assert_eq!(size, 0);
 
@@ -633,17 +633,14 @@ fn iterate_truncated_archive() {
 
 #[test]
 fn uncompress_archive_zip_slip_vulnerability() {
-    assert!(
-        uncompress_archive(
-            &mut std::fs::File::open("tests/fixtures/zip-slip.zip").unwrap(),
-            tempfile::TempDir::new()
-                .expect("Failed to create the tmp directory")
-                .path(),
-            Ownership::Ignore,
-        )
-        .is_err(),
-        "SECURITY ERROR: evil.txt has been uncompressed in /tmp!"
-    );
+    uncompress_archive(
+        &mut std::fs::File::open("tests/fixtures/zip-slip.zip").unwrap(),
+        tempfile::TempDir::new()
+            .expect("Failed to create the tmp directory")
+            .path(),
+        Ownership::Ignore,
+    )
+    .unwrap_err();
 }
 
 #[test]
@@ -654,15 +651,12 @@ fn uncompress_archive_absolute_path() {
     let correct_dest = dest.join("test.txt");
     let incorrect_dest = Path::new("/test.txt");
 
-    assert!(
-        uncompress_archive(
-            &mut std::fs::File::open("tests/fixtures/absolute-path.tar").unwrap(),
-            dest,
-            Ownership::Ignore,
-        )
-        .is_ok(),
-        "SECURITY ERROR: test.txt has been uncompressed in /!"
-    );
+    uncompress_archive(
+        &mut std::fs::File::open("tests/fixtures/absolute-path.tar").unwrap(),
+        dest,
+        Ownership::Ignore,
+    )
+    .unwrap();
 
     assert!(correct_dest.exists());
     assert!(!Path::new(incorrect_dest).exists());
