@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Add `libc::stat` information to `ArchiveContents::StartOfEntry` [#88]
+
+[#88]: https://github.com/OSSystems/compress-tools-rs/pull/88
+
 ## [0.12.4] - 2022-08-01
 
 * Avoid failing uncompressing files in case of ARCHIVE_WARN returns [#85]
