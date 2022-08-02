@@ -6,9 +6,11 @@
 
 * Avoid failing uncompressing files in case of ARCHIVE_WARN returns [#85]
 * Add `_with_encoding` suffix method. [#59]
+* Add `libc::stat` information to `ArchiveContents::StartOfEntry` [#88]
 
 [#59]: https://github.com/OSSystems/compress-tools-rs/pull/59
 [#85]: https://github.com/OSSystems/compress-tools-rs/issues/85
+[#88]: https://github.com/OSSystems/compress-tools-rs/pull/88
 
 ## [0.12.3] - 2022-06-22
 
