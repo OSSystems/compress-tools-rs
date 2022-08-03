@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.13.0] - 2022-08-03
+
 * Add `libc::stat` information to `ArchiveContents::StartOfEntry` [#88]
 
 [#88]: https://github.com/OSSystems/compress-tools-rs/pull/88
