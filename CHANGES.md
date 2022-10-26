@@ -8,6 +8,8 @@
 * Change to 2021 edition
 * Drop lifetime annotations of reader parameter in `ArchiveIterator::from_read`
   and `ArchiveIterator::from_read_with_encoding` [#90]
+* Forward name decode failures in `ArchiveIterator::from_read` and
+  `ArchiveIterator::from_read_with_encoding` instead of panicking [#91]
 
 ## [0.13.0] - 2022-08-03
 
