@@ -9,7 +9,7 @@ documentation = "https://docs.rs/compress-tools"
 keywords = ["compression", "archive"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 build = "src/build.rs"
 rust-version = "1.59.0"
 

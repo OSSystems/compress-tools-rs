@@ -5,6 +5,7 @@
 ## [Unreleased] - ReleaseDate
 
 * Raise MSRV to 1.59.0
+* Change to 2021 edition
 
 ## [0.13.0] - 2022-08-03
 
