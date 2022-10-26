@@ -126,7 +126,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     /// ```
     pub fn from_read_with_encoding(source: R, decode: DecodeCallback) -> Result<ArchiveIterator<R>>
     where
-        R: Read + Seek + 'static,
+        R: Read + Seek,
     {
         let utf8_guard = ffi::UTF8LocaleGuard::new();
         let reader = source;
@@ -231,7 +231,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     /// ```
     pub fn from_read(source: R) -> Result<ArchiveIterator<R>>
     where
-        R: Read + Seek + 'static,
+        R: Read + Seek,
     {
         ArchiveIterator::from_read_with_encoding(source, crate::decode_utf8)
     }
