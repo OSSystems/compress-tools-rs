@@ -345,10 +345,13 @@ where
         |archive_reader, _, mut entry| unsafe {
             loop {
                 match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_EOF => Err(io::Error::new(
-                        io::ErrorKind::NotFound,
-                        format!("path {} doesn't exist inside archive", path),
-                    ))?,
+                    ffi::ARCHIVE_EOF => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::NotFound,
+                            format!("path {} doesn't exist inside archive", path),
+                        )
+                        .into())
+                    }
                     value => archive_result(value, archive_reader)?,
                 }
 
