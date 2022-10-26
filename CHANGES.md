@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Raise MSRV to 1.59.0
+
 ## [0.13.0] - 2022-08-03
 
 * Add `libc::stat` information to `ArchiveContents::StartOfEntry` [#88]
