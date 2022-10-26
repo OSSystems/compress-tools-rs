@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use compress_tools::*;
-use std::path::Path;
+use std::{
+    io::{Cursor, Read},
+    path::Path,
+};
 
 #[test]
 fn get_compressed_file_content() {
@@ -629,6 +632,28 @@ fn iterate_truncated_archive() {
     }
 
     panic!("Did not find expected error");
+}
+
+fn uncompress_bytes_helper(bytes: &[u8]) {
+    let wrapper = Cursor::new(bytes);
+
+    for content in ArchiveIterator::from_read(wrapper).unwrap() {
+        if let ArchiveContents::Err(Error::Unknown) = content {
+            return;
+        }
+    }
+
+    panic!("Did not find expected error");
+}
+
+#[test]
+fn uncompress_bytes() {
+    let mut source = std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap();
+
+    let mut buffer = Vec::new();
+    source.read_to_end(&mut buffer).unwrap();
+
+    uncompress_bytes_helper(&buffer)
 }
 
 #[test]
