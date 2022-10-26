@@ -269,7 +269,10 @@ impl<R: Read + Seek> ArchiveIterator<R> {
             ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => {
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
                 let cstr = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry));
-                let file_name = (self.decode)(cstr.to_bytes()).unwrap();
+                let file_name = match (self.decode)(cstr.to_bytes()) {
+                    Ok(f) => f,
+                    Err(e) => return ArchiveContents::Err(e),
+                };
                 let stat = *ffi::archive_entry_stat(self.archive_entry);
                 ArchiveContents::StartOfEntry(file_name, stat)
             }

@@ -4,7 +4,7 @@
 
 use compress_tools::*;
 use std::{
-    io::{Cursor, Read},
+    io::{Cursor, ErrorKind, Read},
     path::Path,
 };
 
@@ -685,4 +685,20 @@ fn uncompress_archive_absolute_path() {
 
     assert!(correct_dest.exists());
     assert!(!Path::new(incorrect_dest).exists());
+}
+
+#[test]
+fn decode_failure() {
+    let source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
+    let decode_fail = |_bytes: &[u8]| Err(Error::Io(std::io::Error::from(ErrorKind::BrokenPipe)));
+
+    for content in ArchiveIterator::from_read_with_encoding(source, decode_fail).unwrap() {
+        if let ArchiveContents::Err(Error::Io(err)) = content {
+            if err.kind() == ErrorKind::BrokenPipe {
+                return;
+            }
+        }
+    }
+
+    panic!("Did not find expected error");
 }
