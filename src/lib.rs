@@ -69,7 +69,7 @@ use std::{
     slice,
 };
 
-const READER_BUFFER_SIZE: usize = 1024;
+const READER_BUFFER_SIZE: usize = 16384;
 
 /// Determine the ownership behavior when unpacking the archive.
 pub enum Ownership {

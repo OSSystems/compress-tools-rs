@@ -10,6 +10,7 @@
   and `ArchiveIterator::from_read_with_encoding` [#90]
 * Forward name decode failures in `ArchiveIterator::from_read` and
   `ArchiveIterator::from_read_with_encoding` instead of panicking [#91]
+* Increase internal used buffersize [#93]
 
 ## [0.13.0] - 2022-08-03
 
