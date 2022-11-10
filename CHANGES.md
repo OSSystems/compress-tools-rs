@@ -13,6 +13,11 @@
 * Increase internal used buffersize [#93], fixing sub-directories as file
   names. [#89]
 
+[#89]: https://github.com/OSSystems/compress-tools-rs/issues/89
+[#90]: https://github.com/OSSystems/compress-tools-rs/pull/90
+[#91]: https://github.com/OSSystems/compress-tools-rs/pull/91
+[#93]: https://github.com/OSSystems/compress-tools-rs/pull/93
+
 ## [0.13.0] - 2022-08-03
 
 * Add `libc::stat` information to `ArchiveContents::StartOfEntry` [#88]
