@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.14.0] - 2022-11-20
+
 * Raise MSRV to 1.59.0
 * Change to 2021 edition
 * Drop lifetime annotations of reader parameter in `ArchiveIterator::from_read`
