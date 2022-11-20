@@ -1,4 +1,3 @@
-dev-version = false
 pre-release-replacements = [
   {file="CHANGES.md", search="Unreleased", replace="{{version}}"},
   {file="CHANGES.md", search="ReleaseDate", replace="{{date}}"},
