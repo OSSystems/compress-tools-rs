@@ -147,6 +147,63 @@ fn successfully_list_archive_files() {
     );
 }
 
+#[test]
+fn list_archive_zip() {
+    let source = std::fs::File::open("tests/fixtures/test.zip").unwrap();
+
+    assert_eq!(
+        list_archive_files(source).unwrap(),
+        vec![
+            "content/".to_string(),
+            "content/first".to_string(),
+            "content/third".to_string(),
+            "content/nested/".to_string(),
+            "content/nested/second".to_string(),
+        ],
+        "file list inside the archive did not match"
+    );
+}
+
+#[async_std::test]
+#[cfg(feature = "futures_support")]
+async fn list_archive_zip_futures() {
+    let source = async_std::fs::File::open("tests/fixtures/test.zip")
+        .await
+        .unwrap();
+
+    assert_eq!(
+        futures_support::list_archive_files(source).await.unwrap(),
+        vec![
+            "content/".to_string(),
+            "content/first".to_string(),
+            "content/third".to_string(),
+            "content/nested/".to_string(),
+            "content/nested/second".to_string(),
+        ],
+        "file list inside the archive did not match"
+    );
+}
+
+#[tokio::test]
+#[cfg(feature = "tokio_support")]
+async fn list_archive_zip_tokio() {
+    let source = tokio::fs::File::open("tests/fixtures/test.zip")
+        .await
+        .unwrap();
+
+    assert_eq!(
+        tokio_support::list_archive_files(source).await.unwrap(),
+        vec![
+            "content/".to_string(),
+            "content/first".to_string(),
+            "content/third".to_string(),
+            "content/nested/".to_string(),
+            "content/nested/second".to_string(),
+        ],
+        "file list inside the archive did not match"
+    );
+}
+
 #[async_std::test]
 #[cfg(feature = "futures_support")]
 async fn successfully_list_archive_files_futures() {
