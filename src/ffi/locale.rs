@@ -25,7 +25,7 @@ mod inner {
 
     impl UTF8LocaleGuard {
         pub(crate) fn new() -> Self {
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "illumos"))]
             let locale = b"\0";
 
             #[cfg(target_os = "macos")]
