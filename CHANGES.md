@@ -5,8 +5,10 @@
 ## [Unreleased] - ReleaseDate
 
 * Add illumos compilation support [#99]
+* Fix segmentation when failing to decode entry [#100]
 
 [#99]: https://github.com/OSSystems/compress-tools-rs/pull/99
+[#100]: https://github.com/OSSystems/compress-tools-rs/issues/100
 
 ## [0.14.0] - 2022-11-20
 
