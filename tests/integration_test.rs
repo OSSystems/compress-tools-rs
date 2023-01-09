@@ -702,3 +702,11 @@ fn decode_failure() {
 
     panic!("Did not find expected error");
 }
+
+#[test]
+fn decode_chinese_zip() {
+    let source = std::fs::File::open("tests/fixtures/chinese-name.zip").unwrap();
+    let files = list_archive_files(source).expect("Failed to list archives");
+    let expected = ["中文/", "中文/文件/"];
+    assert_eq!(files, expected);
+}
