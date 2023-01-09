@@ -131,7 +131,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let file_name = decode(cstr.to_bytes())?;
                 file_list.push(file_name);
             }
@@ -246,7 +246,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let target_path = CString::new(
                     dest.join(sanitize_destination_path(Path::new(&decode(
                         cstr.to_bytes(),
@@ -356,7 +356,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let file_name = decode(cstr.to_bytes())?;
                 if file_name == path {
                     break;
@@ -578,6 +578,19 @@ fn libarchive_copy_data(
             )?;
         }
     }
+}
+
+fn libarchive_entry_pathname<'a>(entry: *mut ffi::archive_entry) -> Result<&'a CStr> {
+    let pathname = unsafe { ffi::archive_entry_pathname(entry) };
+    if pathname.is_null() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "archive entry has unreadable filename.".to_string(),
+        )
+        .into());
+    }
+
+    Ok(unsafe { CStr::from_ptr(pathname) })
 }
 
 unsafe fn libarchive_write_data_block<W>(
