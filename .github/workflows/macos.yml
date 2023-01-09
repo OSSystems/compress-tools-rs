@@ -25,6 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew install pkgconfig
+          brew install libiconv
           brew install libarchive
           echo PKG_CONFIG_PATH=$(brew ls libarchive | grep .pc$ | sed 's|/libarchive.pc||') >> $GITHUB_ENV
       - name: Checkout sources
