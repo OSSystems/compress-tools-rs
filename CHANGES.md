@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Add illumos compilation support [#99]
+
+[#99]: https://github.com/OSSystems/compress-tools-rs/pull/99
+
 ## [0.14.0] - 2022-11-20
 
 * Raise MSRV to 1.59.0
