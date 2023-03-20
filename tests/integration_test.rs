@@ -349,14 +349,23 @@ fn uncompress_to_dir_with_utf8_pathname() {
 
 #[test]
 fn uncompress_to_dir_with_cjk_pathname() {
-    use encoding::{all::*, DecoderTrap, Encoding};
+    use encoding_rs::{GBK, SHIFT_JIS};
 
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source_utf8 = std::fs::File::open("tests/fixtures/encoding-utf8.zip").unwrap();
     let mut source_gbk = std::fs::File::open("tests/fixtures/encoding-gbk.zip").unwrap();
     let mut source_sjis = std::fs::File::open("tests/fixtures/encoding-sjis.zip").unwrap();
-    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
-    let decode_sjis = |bytes: &[u8]| Ok(WINDOWS_31J.decode(bytes, DecoderTrap::Strict)?);
+    let decode_gbk = |bytes: &[u8]| {
+        GBK.decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+    };
+    let decode_sjis = |bytes: &[u8]| {
+        SHIFT_JIS
+            .decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+    };
 
     uncompress_archive_with_encoding(&mut source_utf8, dir.path(), Ownership::Ignore, decode_utf8)
         .expect("Failed to uncompress the file");
@@ -600,11 +609,15 @@ fn iterate_7z() {
 
 #[test]
 fn iterate_zip_with_cjk_pathname() {
-    use encoding::{all::*, DecoderTrap, Encoding};
+    use encoding_rs::GBK;
 
     let source = std::fs::File::open("tests/fixtures/encoding-gbk-tree.zip").unwrap();
 
-    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
+    let decode_gbk = |bytes: &[u8]| {
+        GBK.decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+    };
     let contents = collect_iterate_results_with_encoding(source, decode_gbk);
 
     let expected: Vec<(String, usize)> = vec![
