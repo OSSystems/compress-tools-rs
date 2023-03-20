@@ -36,6 +36,14 @@ pub enum ArchiveContents {
     Err(Error),
 }
 
+/// Filter for an archive iterator to skip decompression of unwanted
+/// entries.
+///
+/// Gets called on an encounter of a new archive entry with the filename and
+/// file status information of that entry.
+/// The entry is processed on a return value of `true` and ignored on `false`.
+pub type EntryFilterCallback = fn(&str, &libc::stat) -> bool;
+
 /// An iterator over the contents of an archive.
 #[allow(clippy::module_name_repetitions)]
 pub struct ArchiveIterator<R: Read + Seek> {
@@ -46,6 +54,7 @@ pub struct ArchiveIterator<R: Read + Seek> {
     in_file: bool,
     closed: bool,
     error: bool,
+    filter: Option<EntryFilterCallback>,
 
     _pipe: Box<HeapReadSeekerPipe<R>>,
     _utf8_guard: UTF8LocaleGuard,
@@ -68,8 +77,15 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
         };
 
         match &next {
-            ArchiveContents::StartOfEntry(..) => {
+            ArchiveContents::StartOfEntry(name, stat) => {
                 debug_assert!(!self.in_file);
+
+                if let Some(filter) = self.filter {
+                    if !filter(name, stat) {
+                        return self.next();
+                    }
+                }
+
                 self.in_file = true;
                 Some(next)
             }
@@ -97,40 +113,11 @@ impl<R: Read + Seek> Drop for ArchiveIterator<R> {
 }
 
 impl<R: Read + Seek> ArchiveIterator<R> {
-    /// Iterate over the contents of an archive, streaming the contents of each
-    /// entry in small chunks.
-    ///
-    /// ```no_run
-    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// use compress_tools::*;
-    /// use std::fs::File;
-    ///
-    /// let file = File::open("tree.tar")?;
-    ///
-    /// let mut name = String::default();
-    /// let mut size = 0;
-    /// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
-    /// let mut iter = ArchiveIterator::from_read_with_encoding(file, decode_utf8)?;
-    ///
-    /// for content in &mut iter {
-    ///     match content {
-    ///         ArchiveContents::StartOfEntry(s, _) => name = s,
-    ///         ArchiveContents::DataChunk(v) => size += v.len(),
-    ///         ArchiveContents::EndOfEntry => {
-    ///             println!("Entry {} was {} bytes", name, size);
-    ///             size = 0;
-    ///         }
-    ///         ArchiveContents::Err(e) => {
-    ///             Err(e)?;
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// iter.close()?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn from_read_with_encoding(source: R, decode: DecodeCallback) -> Result<ArchiveIterator<R>>
+    fn new(
+        source: R,
+        decode: DecodeCallback,
+        filter: Option<EntryFilterCallback>,
+    ) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
     {
@@ -193,6 +180,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                 in_file: false,
                 closed: false,
                 error: false,
+                filter,
 
                 _pipe: pipe,
                 _utf8_guard: utf8_guard,
@@ -201,6 +189,46 @@ impl<R: Read + Seek> ArchiveIterator<R> {
             res?;
             Ok(iter)
         }
+    }
+
+    /// Iterate over the contents of an archive, streaming the contents of each
+    /// entry in small chunks.
+    ///
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// use compress_tools::*;
+    /// use std::fs::File;
+    ///
+    /// let file = File::open("tree.tar")?;
+    ///
+    /// let mut name = String::default();
+    /// let mut size = 0;
+    /// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+    /// let mut iter = ArchiveIterator::from_read_with_encoding(file, decode_utf8)?;
+    ///
+    /// for content in &mut iter {
+    ///     match content {
+    ///         ArchiveContents::StartOfEntry(s, _) => name = s,
+    ///         ArchiveContents::DataChunk(v) => size += v.len(),
+    ///         ArchiveContents::EndOfEntry => {
+    ///             println!("Entry {} was {} bytes", name, size);
+    ///             size = 0;
+    ///         }
+    ///         ArchiveContents::Err(e) => {
+    ///             Err(e)?;
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// iter.close()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_read_with_encoding(source: R, decode: DecodeCallback) -> Result<ArchiveIterator<R>>
+    where
+        R: Read + Seek,
+    {
+        Self::new(source, decode, None)
     }
 
     /// Iterate over the contents of an archive, streaming the contents of each
@@ -239,7 +267,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     where
         R: Read + Seek,
     {
-        ArchiveIterator::from_read_with_encoding(source, crate::decode_utf8)
+        Self::new(source, crate::decode_utf8, None)
     }
 
     /// Close the iterator, freeing up the associated resources.
@@ -351,5 +379,74 @@ unsafe extern "C" fn libarchive_heap_seekableread_callback<R: Read + Seek>(
 
             -1
         }
+    }
+}
+
+#[must_use]
+pub struct ArchiveIteratorBuilder<R>
+where
+    R: Read + Seek,
+{
+    source: R,
+    decoder: DecodeCallback,
+    filter: Option<EntryFilterCallback>,
+}
+
+/// A builder to generate an archive iterator over the contents of an
+/// archive, streaming the contents of each entry in small chunks.
+/// The default configuration is identical to `ArchiveIterator::from_read`.
+///
+/// # Example
+///
+/// ```no_run
+/// use compress_tools::{ArchiveContents, ArchiveIteratorBuilder};
+/// use std::path::Path;
+/// use std::ffi::OsStr;
+///
+/// let source = std::fs::File::open("tests/fixtures/tree.tar").expect("Failed to open file");
+/// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+///
+/// for content in ArchiveIteratorBuilder::new(source)
+///     .decoder(decode_utf8)
+///     .filter(|name, stat| Path::new(name).file_name() == Some(OsStr::new("foo")) || stat.st_size == 42)
+///     .build()
+///     .expect("Failed to initialize archive")
+///     {
+///         if let ArchiveContents::StartOfEntry(name, _stat) = content {
+///             println!("{name}");
+///         }
+///     }
+/// ```
+impl<R> ArchiveIteratorBuilder<R>
+where
+    R: Read + Seek,
+{
+    /// Create a new builder for an archive iterator. Default configuration is
+    /// identical to `ArchiveIterator::from_read`.
+    pub fn new(source: R) -> ArchiveIteratorBuilder<R> {
+        ArchiveIteratorBuilder {
+            source,
+            decoder: crate::decode_utf8,
+            filter: None,
+        }
+    }
+
+    /// Use a custom decoder to decode filenames of archive entries.
+    /// By default an UTF-8 decoder (`decode_utf8`) is used.
+    pub fn decoder(mut self, decoder: DecodeCallback) -> ArchiveIteratorBuilder<R> {
+        self.decoder = decoder;
+        self
+    }
+
+    /// Use a filter to skip unwanted entries and their decompression.
+    /// By default all entries are iterated.
+    pub fn filter(mut self, filter: EntryFilterCallback) -> ArchiveIteratorBuilder<R> {
+        self.filter = Some(filter);
+        self
+    }
+
+    /// Finish the builder and generate the configured `ArchiveIterator`.
+    pub fn build(self) -> Result<ArchiveIterator<R>> {
+        ArchiveIterator::new(self.source, self.decoder, self.filter)
     }
 }

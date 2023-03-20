@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use compress_tools::*;
+use libc::S_IFREG;
 use std::{
+    ffi::OsStr,
     io::{Cursor, ErrorKind, Read},
     path::Path,
 };
@@ -724,4 +726,81 @@ fn decode_chinese_zip() {
     let files = list_archive_files(source).expect("Failed to list archives");
     let expected = ["中文/", "中文/文件/"];
     assert_eq!(files, expected);
+}
+
+#[test]
+fn iterate_archive_with_filter_name() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut entries = Vec::new();
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|name, _stat| Path::new(name).file_name() == Some(OsStr::new("leaf")))
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec![
+            "tree/branch1/leaf".to_string(),
+            "tree/branch2/leaf".to_string(),
+        ],
+        "filtered file list inside the archive did not match"
+    );
+}
+
+#[test]
+fn iterate_archive_with_filter_type() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut entries = Vec::new();
+    #[allow(clippy::unnecessary_cast)]
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|_name, stat| {
+            /* Use explicit casts to achieve windows portability,
+             * see https://github.com/rust-lang/libc/issues/3161 */
+            (stat.st_mode as u32 & libc::S_IFMT as u32) == S_IFREG as u32
+        })
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec![
+            "tree/branch1/leaf".to_string(),
+            "tree/branch2/leaf".to_string(),
+        ],
+        "filtered file list inside the archive did not match"
+    );
+}
+
+#[test]
+fn iterate_archive_with_filter_path() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut entries = Vec::new();
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|name, _stat| name.starts_with("tree/branch2/"))
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec!["tree/branch2/".to_string(), "tree/branch2/leaf".to_string(),],
+        "filtered file list inside the archive did not match"
+    );
 }
