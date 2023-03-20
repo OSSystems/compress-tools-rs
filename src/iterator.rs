@@ -55,6 +55,8 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
     type Item = ArchiveContents;
 
     fn next(&mut self) -> Option<Self::Item> {
+        debug_assert!(!self.closed);
+
         if self.error {
             return None;
         }
@@ -67,10 +69,14 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
 
         match &next {
             ArchiveContents::StartOfEntry(..) => {
+                debug_assert!(!self.in_file);
                 self.in_file = true;
                 Some(next)
             }
-            ArchiveContents::DataChunk(_) => Some(next),
+            ArchiveContents::DataChunk(_) => {
+                debug_assert!(self.in_file);
+                Some(next)
+            }
             ArchiveContents::EndOfEntry if self.in_file => {
                 self.in_file = false;
                 Some(next)
