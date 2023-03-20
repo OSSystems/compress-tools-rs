@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 fn main() {
-    find_libarchive()
+    find_libarchive();
 }
 
 #[cfg(not(target_env = "msvc"))]

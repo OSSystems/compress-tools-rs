@@ -39,10 +39,10 @@ mod inner {
                 )
             };
 
-            let save = if !utf8_locale.is_null() {
-                unsafe { libc::uselocale(utf8_locale) }
-            } else {
+            let save = if utf8_locale.is_null() {
                 std::ptr::null_mut()
+            } else {
+                unsafe { libc::uselocale(utf8_locale) }
             };
 
             Self { save, utf8_locale }

@@ -1,7 +1,6 @@
 use std::{
     ffi::{CStr, CString},
     io::{Read, Seek, SeekFrom, Write},
-    ops::DerefMut,
     slice,
 };
 
@@ -38,6 +37,7 @@ pub enum ArchiveContents {
 }
 
 /// An iterator over the contents of an archive.
+#[allow(clippy::module_name_repetitions)]
 pub struct ArchiveIterator<R: Read + Seek> {
     archive_entry: *mut ffi::archive_entry,
     archive_reader: *mut ffi::archive,
@@ -168,7 +168,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                 archive_result(
                     ffi::archive_read_open(
                         archive_reader,
-                        (pipe.deref_mut() as *mut HeapReadSeekerPipe<R>) as *mut c_void,
+                        std::ptr::addr_of_mut!(*pipe) as *mut c_void,
                         None,
                         Some(libarchive_heap_seekableread_callback::<R>),
                         None,
