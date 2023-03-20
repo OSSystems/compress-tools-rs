@@ -72,6 +72,7 @@ use std::{
 const READER_BUFFER_SIZE: usize = 16384;
 
 /// Determine the ownership behavior when unpacking the archive.
+#[derive(Clone, Copy, Debug)]
 pub enum Ownership {
     /// Preserve the ownership of the files when uncompressing the archive.
     Preserve,
@@ -456,7 +457,7 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut SeekableReaderPipe) as *mut c_void,
+                    std::ptr::addr_of_mut!(pipe) as *mut c_void,
                     None,
                     Some(libarchive_seekable_read_callback),
                     None,
@@ -513,7 +514,7 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut ReaderPipe) as *mut c_void,
+                    std::ptr::addr_of_mut!(pipe) as *mut c_void,
                     None,
                     Some(libarchive_read_callback),
                     None,
