@@ -573,7 +573,13 @@ fn libarchive_copy_data(
             }
 
             archive_result(
-                ffi::archive_write_data_block(archive_writer, buffer, size, offset) as i32,
+                /* Might depending on the version of libarchive on success
+                 * return 0 or the number of bytes written,
+                 * see man:archive_write_data(3) */
+                match ffi::archive_write_data_block(archive_writer, buffer, size, offset) {
+                    x if x >= 0 => 0,
+                    x => i32::try_from(x).unwrap(),
+                },
                 archive_writer,
             )?;
         }
