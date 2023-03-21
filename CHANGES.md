@@ -6,9 +6,19 @@
 
 * Add illumos compilation support [#99]
 * Fix segmentation when failing to decode entry [#100]
+* Wrap return value of `archive_write_data_block(3)` [#108]
+* Allow to filter ArchiveIterator entries [#109]
+* Add debug asserts to ArchiveIterator::next() [#110]
+* examples: add example using ArchiveIterator [#111]
+* tests: port from unmaintained crate encoding to encoding_rs [#112]
 
 [#99]: https://github.com/OSSystems/compress-tools-rs/pull/99
 [#100]: https://github.com/OSSystems/compress-tools-rs/issues/100
+[#108]: https://github.com/OSSystems/compress-tools-rs/pull/108
+[#109]: https://github.com/OSSystems/compress-tools-rs/pull/109
+[#110]: https://github.com/OSSystems/compress-tools-rs/pull/110
+[#111]: https://github.com/OSSystems/compress-tools-rs/pull/111
+[#112]: https://github.com/OSSystems/compress-tools-rs/pull/112
 
 ## [0.14.0] - 2022-11-20
 
