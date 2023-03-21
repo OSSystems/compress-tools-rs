@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.14.1] - 2023-03-21
+
 * Add illumos compilation support [#99]
 * Fix segmentation when failing to decode entry [#100]
 * Wrap return value of `archive_write_data_block(3)` [#108]
