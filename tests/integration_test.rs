@@ -364,7 +364,9 @@ fn uncompress_to_dir_with_cjk_pathname() {
         SHIFT_JIS
             .decode_without_bom_handling_and_without_replacement(bytes)
             .map(String::from)
-            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed(
+                "SHIFT_JIS failure",
+            )))
     };
 
     uncompress_archive_with_encoding(&mut source_utf8, dir.path(), Ownership::Ignore, decode_utf8)
