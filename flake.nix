@@ -18,15 +18,13 @@
 
         rust-toolchain = with rust.packages.${system};
           let
-            channel_1_59_0 = {
+            msrvToolchain = toolchainOf {
               channel = "1.59.0";
               sha256 = "sha256-4IUZZWXHBBxcwRuQm9ekOwzc0oNqH/9NkI1ejW7KajU=";
             };
-
-            stable_1_59_0 = toolchainOf channel_1_59_0;
           in
           combine [
-            (stable_1_59_0.withComponents [ "rustc" "cargo" "rust-src" "clippy" ])
+            (msrvToolchain.withComponents [ "rustc" "cargo" "rust-src" "clippy" ])
 
             latest.rustfmt
             latest.rust-analyzer
