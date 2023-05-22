@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Fix call stack runtime error on filter from `ArchiveIterator` [#113]
+
+[#113]: https://github.com/OSSystems/compress-tools-rs/pull/113
+
 ## [0.14.1] - 2023-03-21
 
 * Add illumos compilation support [#99]
