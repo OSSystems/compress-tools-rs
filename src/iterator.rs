@@ -70,37 +70,39 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
             return None;
         }
 
-        let next = if self.in_file {
-            unsafe { self.next_data_chunk() }
-        } else {
-            unsafe { self.next_header() }
-        };
+        loop {
+            let next = if self.in_file {
+                unsafe { self.next_data_chunk() }
+            } else {
+                unsafe { self.next_header() }
+            };
 
-        match &next {
-            ArchiveContents::StartOfEntry(name, stat) => {
-                debug_assert!(!self.in_file);
+            match &next {
+                ArchiveContents::StartOfEntry(name, stat) => {
+                    debug_assert!(!self.in_file);
 
-                if let Some(filter) = self.filter {
-                    if !filter(name, stat) {
-                        return self.next();
+                    if let Some(filter) = self.filter {
+                        if !filter(name, stat) {
+                            continue;
+                        }
                     }
-                }
 
-                self.in_file = true;
-                Some(next)
-            }
-            ArchiveContents::DataChunk(_) => {
-                debug_assert!(self.in_file);
-                Some(next)
-            }
-            ArchiveContents::EndOfEntry if self.in_file => {
-                self.in_file = false;
-                Some(next)
-            }
-            ArchiveContents::EndOfEntry => None,
-            ArchiveContents::Err(_) => {
-                self.error = true;
-                Some(next)
+                    self.in_file = true;
+                    break Some(next);
+                }
+                ArchiveContents::DataChunk(_) => {
+                    debug_assert!(self.in_file);
+                    break Some(next);
+                }
+                ArchiveContents::EndOfEntry if self.in_file => {
+                    self.in_file = false;
+                    break Some(next);
+                }
+                ArchiveContents::EndOfEntry => break None,
+                ArchiveContents::Err(_) => {
+                    self.error = true;
+                    break Some(next);
+                }
             }
         }
     }
