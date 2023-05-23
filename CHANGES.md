@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.14.2] - 2023-05-23
+
 * Fix call stack runtime error on filter from `ArchiveIterator` [#113]
 
 [#113]: https://github.com/OSSystems/compress-tools-rs/pull/113
