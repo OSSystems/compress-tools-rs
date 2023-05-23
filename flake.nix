@@ -39,6 +39,8 @@
             libarchive
             clang
             llvmPackages.libclang
+
+            cargo-release
           ];
 
           # why do we need to set the library path manually?
