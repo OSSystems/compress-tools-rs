@@ -731,10 +731,11 @@ fn decode_chinese_zip() {
 #[test]
 fn iterate_archive_with_filter_name() {
     let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+    let expected_name = "leaf";
 
     let mut entries = Vec::new();
     for content in ArchiveIteratorBuilder::new(source)
-        .filter(|name, _stat| Path::new(name).file_name() == Some(OsStr::new("leaf")))
+        .filter(|name, _stat| Path::new(name).file_name() == Some(OsStr::new(expected_name)))
         .build()
         .unwrap()
     {
