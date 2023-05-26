@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.14.3] - 2023-05-26
+
 * Allow passing a closure for `ArchiveIterator::filter` [#115]
 
 [#115]: https://github.com/OSSystems/compress-tools-rs/pull/115
