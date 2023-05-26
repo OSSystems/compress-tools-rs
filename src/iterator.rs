@@ -42,7 +42,7 @@ pub enum ArchiveContents {
 /// Gets called on an encounter of a new archive entry with the filename and
 /// file status information of that entry.
 /// The entry is processed on a return value of `true` and ignored on `false`.
-pub type EntryFilterCallback = fn(&str, &libc::stat) -> bool;
+pub type EntryFilterCallbackFn = dyn Fn(&str, &libc::stat) -> bool;
 
 /// An iterator over the contents of an archive.
 #[allow(clippy::module_name_repetitions)]
@@ -54,7 +54,7 @@ pub struct ArchiveIterator<R: Read + Seek> {
     in_file: bool,
     closed: bool,
     error: bool,
-    filter: Option<EntryFilterCallback>,
+    filter: Option<Box<EntryFilterCallbackFn>>,
 
     _pipe: Box<HeapReadSeekerPipe<R>>,
     _utf8_guard: UTF8LocaleGuard,
@@ -81,7 +81,7 @@ impl<R: Read + Seek> Iterator for ArchiveIterator<R> {
                 ArchiveContents::StartOfEntry(name, stat) => {
                     debug_assert!(!self.in_file);
 
-                    if let Some(filter) = self.filter {
+                    if let Some(filter) = &self.filter {
                         if !filter(name, stat) {
                             continue;
                         }
@@ -118,7 +118,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     fn new(
         source: R,
         decode: DecodeCallback,
-        filter: Option<EntryFilterCallback>,
+        filter: Option<Box<EntryFilterCallbackFn>>,
     ) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
@@ -391,7 +391,7 @@ where
 {
     source: R,
     decoder: DecodeCallback,
-    filter: Option<EntryFilterCallback>,
+    filter: Option<Box<EntryFilterCallbackFn>>,
 }
 
 /// A builder to generate an archive iterator over the contents of an
@@ -442,8 +442,11 @@ where
 
     /// Use a filter to skip unwanted entries and their decompression.
     /// By default all entries are iterated.
-    pub fn filter(mut self, filter: EntryFilterCallback) -> ArchiveIteratorBuilder<R> {
-        self.filter = Some(filter);
+    pub fn filter<F>(mut self, filter: F) -> ArchiveIteratorBuilder<R>
+    where
+        F: Fn(&str, &libc::stat) -> bool + 'static,
+    {
+        self.filter = Some(Box::new(filter));
         self
     }
 

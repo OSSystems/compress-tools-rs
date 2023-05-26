@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Allow passing a closure for `ArchiveIterator::filter` [#115]
+
+[#115]: https://github.com/OSSystems/compress-tools-rs/pull/115
+
 ## [0.14.2] - 2023-05-23
 
 * Fix call stack runtime error on filter from `ArchiveIterator` [#113]
