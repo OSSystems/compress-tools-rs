@@ -3,6 +3,7 @@
 <!-- next-header -->
 
 ## [Unreleased] - ReleaseDate
+* Enable static linking via feature flag
 
 ## [0.14.3] - 2023-05-26
 
@@ -70,6 +71,7 @@
 * Raise MSRV to 1.49.0
 * Upgrade tokio-util to 0.7.0
 * Fix absolute paths being extracted outside of destination directory [#83]
+* Enable static linking via feature flag
 
 [#81]: https://github.com/OSSystems/compress-tools-rs/issues/81
 [#83]: https://github.com/OSSystems/compress-tools-rs/issues/83
