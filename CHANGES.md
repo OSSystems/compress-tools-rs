@@ -24,6 +24,9 @@
 * Reject ZIP archives containing Deflate64 (method 9) entries up front with a
   new `Error::UnsupportedZipCompression` variant, instead of silently
   succeeding on listing and failing mid-extraction [#136]
+* Support iterating over encrypted (password-protected) ZIP archives via the
+  new `ArchivePassword` type and `ArchiveIteratorBuilder::with_password`
+  builder method [#158]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#136]: https://github.com/OSSystems/compress-tools-rs/issues/136
@@ -35,6 +38,7 @@
 [#148]: https://github.com/OSSystems/compress-tools-rs/pull/148
 [#153]: https://github.com/OSSystems/compress-tools-rs/issues/153
 [#154]: https://github.com/OSSystems/compress-tools-rs/pull/154
+[#158]: https://github.com/OSSystems/compress-tools-rs/pull/158
 
 ## [0.15.1] - 2024-07-16
 

@@ -50,6 +50,7 @@ bindgen \
     --allowlist-function "archive_read_data_block" \
     --allowlist-function "archive_read_next_header" \
     --allowlist-function "archive_read_open" \
+    --allowlist-function "archive_read_add_passphrase" \
     --allowlist-function "archive_write_disk_new" \
     --allowlist-function "archive_write_disk_set_options" \
     --allowlist-function "archive_write_disk_set_standard_lookup" \

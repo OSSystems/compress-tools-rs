@@ -962,3 +962,89 @@ fn test_slice_from_raw_parts() {
     let mut outfile = tempfile::NamedTempFile::new().unwrap();
     uncompress_archive_file(&mut source, &mut outfile, "1/2/1.txt").unwrap();
 }
+
+#[test]
+fn iterate_archive_with_password() {
+    let source = std::fs::File::open("tests/fixtures/with-password.zip").unwrap();
+    let password = ArchivePassword::new("123").unwrap();
+
+    let mut files_result: Vec<String> = Vec::new();
+    let mut current_file_content: Vec<u8> = vec![];
+    let mut current_file_name = String::new();
+
+    let mut iter = ArchiveIteratorBuilder::new(source)
+        .with_password(password)
+        .filter(|name, _| name.ends_with(".txt"))
+        .build()
+        .unwrap();
+
+    for content in &mut iter {
+        match content {
+            ArchiveContents::StartOfEntry(name, _stat) => {
+                current_file_name = name;
+            }
+            ArchiveContents::DataChunk(dt) => {
+                current_file_content.extend(dt);
+            }
+            ArchiveContents::EndOfEntry => {
+                let content_raw = String::from_utf8(current_file_content.clone()).unwrap();
+                current_file_content.clear();
+
+                let content = format!("{}={}", current_file_name, content_raw);
+                files_result.push(content);
+            }
+            _ => {}
+        }
+    }
+
+    iter.close().unwrap();
+
+    assert_eq!(files_result.len(), 2);
+    assert_eq!(
+        files_result,
+        vec![
+            "with-password/file1.txt=its encrypted file".to_string(),
+            "with-password/file2.txt=file 2 in archive encrypted!".to_string()
+        ]
+    );
+}
+
+#[test]
+fn iterate_encrypted_archive_without_password_errors() {
+    let source = std::fs::File::open("tests/fixtures/with-password.zip").unwrap();
+
+    let iter = ArchiveIterator::from_read(source).unwrap();
+    let saw_error = iter
+        .into_iter()
+        .any(|c| matches!(c, ArchiveContents::Err(_)));
+    assert!(
+        saw_error,
+        "iterating an encrypted archive without a password should surface an error",
+    );
+}
+
+#[test]
+fn iterate_encrypted_archive_with_wrong_password_errors() {
+    let source = std::fs::File::open("tests/fixtures/with-password.zip").unwrap();
+    let password = ArchivePassword::new("wrong").unwrap();
+
+    let iter = ArchiveIteratorBuilder::new(source)
+        .with_password(password)
+        .build()
+        .unwrap();
+    let saw_error = iter
+        .into_iter()
+        .any(|c| matches!(c, ArchiveContents::Err(_)));
+    assert!(
+        saw_error,
+        "iterating an encrypted archive with a wrong password should surface an error",
+    );
+}
+
+#[test]
+fn archive_password_with_nul_byte_rejected() {
+    assert!(
+        ArchivePassword::new("abc\0def").is_err(),
+        "passwords containing NUL must be rejected, not panic",
+    );
+}
