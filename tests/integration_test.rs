@@ -808,7 +808,7 @@ fn iterate_archive_with_filter_path() {
 #[test]
 fn iterate_archive_with_password() {
     let source = std::fs::File::open("tests/fixtures/with-password.zip").unwrap();
-    let source_password: Password = "123".into();
+    let source_password: ArchivePassword = "123".into();
 
     let mut files_result: Vec<String> = Vec::new();
     let mut current_file_content: Vec<u8> = vec![];

@@ -44,15 +44,15 @@ pub enum ArchiveContents {
 /// The entry is processed on a return value of `true` and ignored on `false`.
 pub type EntryFilterCallbackFn = dyn Fn(&str, &libc::stat) -> bool;
 
-pub struct Password(Vec<u8>);
+pub struct ArchivePassword(Vec<u8>);
 
-impl Password {
+impl ArchivePassword {
     pub fn extract(&self) -> *const i8 {
         self.0.as_ptr() as *const i8
     }
 }
 
-impl<T> From<T> for Password where T: AsRef<str> {
+impl<T> From<T> for ArchivePassword where T: AsRef<str> {
     fn from(s: T) -> Self {
         Self(s.as_ref().as_bytes().to_vec())
     }
@@ -133,7 +133,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         source: R,
         decode: DecodeCallback,
         filter: Option<Box<EntryFilterCallbackFn>>,
-        password: Option<Password>,
+        password: Option<ArchivePassword>,
     ) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
@@ -284,7 +284,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn from_read(source: R, password: Option<Password>) -> Result<ArchiveIterator<R>>
+    pub fn from_read(source: R, password: Option<ArchivePassword>) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
     {
@@ -411,7 +411,7 @@ where
     source: R,
     decoder: DecodeCallback,
     filter: Option<Box<EntryFilterCallbackFn>>,
-    password: Option<Password>,
+    password: Option<ArchivePassword>,
 }
 
 /// A builder to generate an archive iterator over the contents of an
@@ -472,7 +472,7 @@ where
     }
 
     /// Set a custom password to decode content of archive entries.
-    pub fn with_password(mut self, password: Password) -> ArchiveIteratorBuilder<R> {
+    pub fn with_password(mut self, password: ArchivePassword) -> ArchiveIteratorBuilder<R> {
         self.password = Some(password);
         self
     }
