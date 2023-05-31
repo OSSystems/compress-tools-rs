@@ -641,7 +641,7 @@ fn iterate_zip_with_cjk_pathname() {
 #[test]
 fn iterate_truncated_archive() {
     let source = std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap();
-    for content in ArchiveIterator::from_read(source, Password::empty()).unwrap() {
+    for content in ArchiveIterator::from_read(source, None).unwrap() {
         if let ArchiveContents::Err(Error::Unknown) = content {
             return;
         }
@@ -653,7 +653,7 @@ fn iterate_truncated_archive() {
 fn uncompress_bytes_helper(bytes: &[u8]) {
     let wrapper = Cursor::new(bytes);
 
-    for content in ArchiveIterator::from_read(wrapper, Password::empty()).unwrap() {
+    for content in ArchiveIterator::from_read(wrapper, None).unwrap() {
         if let ArchiveContents::Err(Error::Unknown) = content {
             return;
         }
@@ -814,12 +814,11 @@ fn iterate_archive_with_password() {
     let mut current_file_content: Vec<u8> = vec![];
     let mut current_file_name = String::new();
 
-    let mut iter: ArchiveIterator<std::fs::File> = ArchiveIteratorBuilder::new(source)
+    let mut iter = ArchiveIteratorBuilder::new(source)
         .with_password(source_password)
         .filter(|name, _| name.ends_with(".txt"))
         .build()
-        .unwrap()
-        .into_iter();
+        .unwrap();
 
     for content in &mut iter {
         match content {
