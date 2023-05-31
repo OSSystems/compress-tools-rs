@@ -61,7 +61,7 @@ mod zip_preflight;
 use error::{archive_result, archive_result_strict};
 pub use error::{Error, Result};
 use io::{Seek, SeekFrom};
-pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder};
+pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder, ArchivePassword};
 use std::{
     ffi::{CStr, CString},
     io::{self, Read, Write},
