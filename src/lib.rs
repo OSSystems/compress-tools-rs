@@ -60,7 +60,7 @@ pub mod tokio_support;
 use error::archive_result;
 pub use error::{Error, Result};
 use io::{Seek, SeekFrom};
-pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder};
+pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder, Password};
 use std::{
     ffi::{CStr, CString},
     io::{self, Read, Write},

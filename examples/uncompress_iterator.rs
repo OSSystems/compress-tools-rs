@@ -16,7 +16,7 @@ fn main() -> compress_tools::Result<()> {
 
     let source = std::fs::File::open(cmd.source_path)?;
 
-    for content in ArchiveIterator::from_read(source)? {
+    for content in ArchiveIterator::from_read(source, Password::empty())? {
         if let ArchiveContents::StartOfEntry(name, stat) = content {
             println!("{name}: size={}", stat.st_size);
         }
