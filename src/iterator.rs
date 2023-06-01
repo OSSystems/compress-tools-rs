@@ -44,7 +44,7 @@ pub enum ArchiveContents {
 /// The entry is processed on a return value of `true` and ignored on `false`.
 pub type EntryFilterCallbackFn = dyn Fn(&str, &libc::stat) -> bool;
 
-pub struct ArchivePassword(Vec<u8>);
+pub struct ArchivePassword(CString);
 
 impl ArchivePassword {
     pub fn extract(&self) -> *const i8 {
@@ -54,7 +54,7 @@ impl ArchivePassword {
 
 impl<T> From<T> for ArchivePassword where T: AsRef<str> {
     fn from(s: T) -> Self {
-        Self(s.as_ref().as_bytes().to_vec())
+        Self(CString::new(s.as_ref()).unwrap())
     }
 }
 
