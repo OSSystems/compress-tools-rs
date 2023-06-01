@@ -52,7 +52,10 @@ impl ArchivePassword {
     }
 }
 
-impl<T> From<T> for ArchivePassword where T: AsRef<str> {
+impl<T> From<T> for ArchivePassword
+where
+    T: AsRef<str>,
+{
     fn from(s: T) -> Self {
         Self(CString::new(s.as_ref()).unwrap())
     }
