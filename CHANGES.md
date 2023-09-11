@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Raise MSRV to 1.63.0
+
 ## [0.14.3] - 2023-05-26
 
 * Allow passing a closure for `ArchiveIterator::filter` [#115]
