@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use compress_tools::*;
+use libc::S_IFREG;
 use std::{
+    ffi::OsStr,
     io::{Cursor, ErrorKind, Read},
     path::Path,
 };
@@ -349,14 +351,25 @@ fn uncompress_to_dir_with_utf8_pathname() {
 
 #[test]
 fn uncompress_to_dir_with_cjk_pathname() {
-    use encoding::{all::*, DecoderTrap, Encoding};
+    use encoding_rs::{GBK, SHIFT_JIS};
 
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source_utf8 = std::fs::File::open("tests/fixtures/encoding-utf8.zip").unwrap();
     let mut source_gbk = std::fs::File::open("tests/fixtures/encoding-gbk.zip").unwrap();
     let mut source_sjis = std::fs::File::open("tests/fixtures/encoding-sjis.zip").unwrap();
-    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
-    let decode_sjis = |bytes: &[u8]| Ok(WINDOWS_31J.decode(bytes, DecoderTrap::Strict)?);
+    let decode_gbk = |bytes: &[u8]| {
+        GBK.decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+    };
+    let decode_sjis = |bytes: &[u8]| {
+        SHIFT_JIS
+            .decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed(
+                "SHIFT_JIS failure",
+            )))
+    };
 
     uncompress_archive_with_encoding(&mut source_utf8, dir.path(), Ownership::Ignore, decode_utf8)
         .expect("Failed to uncompress the file");
@@ -600,11 +613,15 @@ fn iterate_7z() {
 
 #[test]
 fn iterate_zip_with_cjk_pathname() {
-    use encoding::{all::*, DecoderTrap, Encoding};
+    use encoding_rs::GBK;
 
     let source = std::fs::File::open("tests/fixtures/encoding-gbk-tree.zip").unwrap();
 
-    let decode_gbk = |bytes: &[u8]| Ok(GBK.decode(bytes, DecoderTrap::Strict)?);
+    let decode_gbk = |bytes: &[u8]| {
+        GBK.decode_without_bom_handling_and_without_replacement(bytes)
+            .map(String::from)
+            .ok_or(Error::Encoding(std::borrow::Cow::Borrowed("GBK failure")))
+    };
     let contents = collect_iterate_results_with_encoding(source, decode_gbk);
 
     let expected: Vec<(String, usize)> = vec![
@@ -701,4 +718,90 @@ fn decode_failure() {
     }
 
     panic!("Did not find expected error");
+}
+
+#[test]
+fn decode_chinese_zip() {
+    let source = std::fs::File::open("tests/fixtures/chinese-name.zip").unwrap();
+    let files = list_archive_files(source).expect("Failed to list archives");
+    let expected = ["中文/", "中文/文件/"];
+    assert_eq!(files, expected);
+}
+
+#[test]
+fn iterate_archive_with_filter_name() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+    let expected_name = "leaf";
+
+    let mut entries = Vec::new();
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|name, _stat| Path::new(name).file_name() == Some(OsStr::new(expected_name)))
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec![
+            "tree/branch1/leaf".to_string(),
+            "tree/branch2/leaf".to_string(),
+        ],
+        "filtered file list inside the archive did not match"
+    );
+}
+
+#[test]
+fn iterate_archive_with_filter_type() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut entries = Vec::new();
+    #[allow(clippy::unnecessary_cast)]
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|_name, stat| {
+            /* Use explicit casts to achieve windows portability,
+             * see https://github.com/rust-lang/libc/issues/3161 */
+            (stat.st_mode as u32 & libc::S_IFMT as u32) == S_IFREG as u32
+        })
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec![
+            "tree/branch1/leaf".to_string(),
+            "tree/branch2/leaf".to_string(),
+        ],
+        "filtered file list inside the archive did not match"
+    );
+}
+
+#[test]
+fn iterate_archive_with_filter_path() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut entries = Vec::new();
+    for content in ArchiveIteratorBuilder::new(source)
+        .filter(|name, _stat| name.starts_with("tree/branch2/"))
+        .build()
+        .unwrap()
+    {
+        if let ArchiveContents::StartOfEntry(name, _stat) = content {
+            entries.push(name);
+        }
+    }
+
+    assert_eq!(
+        entries,
+        vec!["tree/branch2/".to_string(), "tree/branch2/leaf".to_string(),],
+        "filtered file list inside the archive did not match"
+    );
 }

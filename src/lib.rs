@@ -60,7 +60,7 @@ pub mod tokio_support;
 use error::archive_result;
 pub use error::{Error, Result};
 use io::{Seek, SeekFrom};
-pub use iterator::{ArchiveContents, ArchiveIterator};
+pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder};
 use std::{
     ffi::{CStr, CString},
     io::{self, Read, Write},
@@ -72,6 +72,7 @@ use std::{
 const READER_BUFFER_SIZE: usize = 16384;
 
 /// Determine the ownership behavior when unpacking the archive.
+#[derive(Clone, Copy, Debug)]
 pub enum Ownership {
     /// Preserve the ownership of the files when uncompressing the archive.
     Preserve,
@@ -131,7 +132,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let file_name = decode(cstr.to_bytes())?;
                 file_list.push(file_name);
             }
@@ -246,7 +247,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let target_path = CString::new(
                     dest.join(sanitize_destination_path(Path::new(&decode(
                         cstr.to_bytes(),
@@ -356,7 +357,7 @@ where
                 }
 
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = CStr::from_ptr(ffi::archive_entry_pathname(entry));
+                let cstr = libarchive_entry_pathname(entry)?;
                 let file_name = decode(cstr.to_bytes())?;
                 if file_name == path {
                     break;
@@ -456,7 +457,7 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut SeekableReaderPipe) as *mut c_void,
+                    std::ptr::addr_of_mut!(pipe) as *mut c_void,
                     None,
                     Some(libarchive_seekable_read_callback),
                     None,
@@ -513,7 +514,7 @@ where
             archive_result(
                 ffi::archive_read_open(
                     archive_reader,
-                    (&mut pipe as *mut ReaderPipe) as *mut c_void,
+                    std::ptr::addr_of_mut!(pipe) as *mut c_void,
                     None,
                     Some(libarchive_read_callback),
                     None,
@@ -573,11 +574,30 @@ fn libarchive_copy_data(
             }
 
             archive_result(
-                ffi::archive_write_data_block(archive_writer, buffer, size, offset) as i32,
+                /* Might depending on the version of libarchive on success
+                 * return 0 or the number of bytes written,
+                 * see man:archive_write_data(3) */
+                match ffi::archive_write_data_block(archive_writer, buffer, size, offset) {
+                    x if x >= 0 => 0,
+                    x => i32::try_from(x).unwrap(),
+                },
                 archive_writer,
             )?;
         }
     }
+}
+
+fn libarchive_entry_pathname<'a>(entry: *mut ffi::archive_entry) -> Result<&'a CStr> {
+    let pathname = unsafe { ffi::archive_entry_pathname(entry) };
+    if pathname.is_null() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "archive entry has unreadable filename.".to_string(),
+        )
+        .into());
+    }
+
+    Ok(unsafe { CStr::from_ptr(pathname) })
 }
 
 unsafe fn libarchive_write_data_block<W>(

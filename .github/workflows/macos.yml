@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 1.59.0 # MSRV
+          - 1.63.0 # MSRV
           - stable
           - nightly
 
@@ -28,7 +28,7 @@ jobs:
           brew install libarchive
           echo PKG_CONFIG_PATH=$(brew ls libarchive | grep .pc$ | sed 's|/libarchive.pc||') >> $GITHUB_ENV
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
         with:

@@ -2,11 +2,8 @@
   description = "compress-tools-rs";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-22.05";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nixpkgs.url = "nixpkgs/nixos-23.05";
+    flake-utils.url = "github:numtide/flake-utils";
 
     rust = {
       url = "github:nix-community/fenix";
@@ -21,22 +18,20 @@
 
         rust-toolchain = with rust.packages.${system};
           let
-            channel_1_59_0 = {
-              channel = "1.59.0";
-              sha256 = "sha256-4IUZZWXHBBxcwRuQm9ekOwzc0oNqH/9NkI1ejW7KajU=";
+            msrvToolchain = toolchainOf {
+              channel = "1.63.0";
+              sha256 = "sha256-KXx+ID0y4mg2B3LHp7IyaiMrdexF6octADnAtFIOjrY=";
             };
-
-            stable_1_59_0 = toolchainOf channel_1_59_0;
           in
           combine [
-            (stable_1_59_0.withComponents [ "rustc" "cargo" "rust-src" "clippy" ])
+            (msrvToolchain.withComponents [ "rustc" "cargo" "rust-src" "clippy" ])
 
             latest.rustfmt
             latest.rust-analyzer
           ];
       in
       {
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             rust-toolchain
             rust-bindgen
@@ -44,6 +39,8 @@
             libarchive
             clang
             llvmPackages.libclang
+
+            cargo-release
           ];
 
           # why do we need to set the library path manually?

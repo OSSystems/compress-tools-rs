@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 1.59.0 # MSRV
+          - 1.63.0 # MSRV
           - stable
           - nightly
         linkage:
@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cache vcpkg installed
         uses: actions/cache@v3
