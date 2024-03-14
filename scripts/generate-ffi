@@ -48,6 +48,7 @@ bindgen \
     --whitelist-function "archive_read_data_block" \
     --whitelist-function "archive_read_next_header" \
     --whitelist-function "archive_read_open" \
+    --whitelist-function "archive_read_add_passphrase" \
     --whitelist-function "archive_write_disk_new" \
     --whitelist-function "archive_write_disk_set_options" \
     --whitelist-function "archive_write_disk_set_standard_lookup" \
