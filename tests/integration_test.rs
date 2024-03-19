@@ -591,6 +591,55 @@ fn iterate_tar() {
     assert_eq!(contents, expected);
 }
 
+fn collect_iterate_names_with_encoding(
+    source: std::fs::File,
+    decode: DecodeCallback,
+) -> Vec<String> {
+    let mut results = Vec::new();
+
+    let mut iter =
+        ArchiveIterator::from_read_with_encoding(source, decode).expect("Failed to get the file");
+
+    while let Some(content) = iter.next_header() {
+        match content {
+            ArchiveContents::StartOfEntry(file_name, _) => {
+                results.push(file_name);
+            }
+            ArchiveContents::DataChunk(_) => {
+                panic!("expected StartOfntry got DataChunk")
+            }
+            ArchiveContents::EndOfEntry => {
+                panic!("expected StartOfntry got EndOfEntry")
+            }
+            ArchiveContents::Err(e) => panic!("{:?}", e),
+        }
+    }
+
+    iter.close().unwrap();
+
+    results
+}
+
+#[test]
+fn iterate_tar_names() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let contents = collect_iterate_names_with_encoding(source, decode_utf8);
+
+    let expected: Vec<String> = vec![
+        "tree/",
+        "tree/branch1/",
+        "tree/branch1/leaf",
+        "tree/branch2/",
+        "tree/branch2/leaf",
+    ]
+    .into_iter()
+    .map(|a| a.into())
+    .collect();
+
+    assert_eq!(contents, expected);
+}
+
 #[test]
 fn iterate_7z() {
     let source = std::fs::File::open("tests/fixtures/tree.7z").unwrap();
