@@ -6,8 +6,10 @@
 
 * Raise MSRV to 1.65.0
 * Fix use slice::from_raw_parts only if size > 0 [#126]
+* Add feature "static" to allow static linkage for unix/macos [#127]
 
 [#126]: https://github.com/OSSystems/compress-tools-rs/pull/126
+[#127]: https://github.com/OSSystems/compress-tools-rs/pull/127
 
 ## [0.14.3] - 2023-05-26
 

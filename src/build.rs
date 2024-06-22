@@ -24,10 +24,32 @@ fn find_libarchive() {
         std::env::set_var("PKG_CONFIG_PATH", MACOS_HOMEBREW_LIBARCHIVE_PATH);
     }
 
+    if cfg!(feature = "static") {
+        pkg_config::Config::new()
+            .statik(cfg!(feature = "static"))
+            .probe("libb2")
+            .expect("Unable to find libb2");
+
+        pkg_config::Config::new()
+            .statik(cfg!(feature = "static"))
+            .probe("liblz4")
+            .expect("Unable to find liblz4");
+
+        pkg_config::Config::new()
+            .statik(cfg!(feature = "static"))
+            .probe("libzstd")
+            .expect("Unable to find libzstd");
+    }
+
     pkg_config::Config::new()
         .atleast_version("3.2.0")
+        .statik(cfg!(feature = "static"))
         .probe("libarchive")
         .expect("Unable to find libarchive");
+
+    if cfg!(feature = "static") {
+        println!("cargo:rustc-link-lib=static=archive");
+    }
 }
 
 #[cfg(target_env = "msvc")]
