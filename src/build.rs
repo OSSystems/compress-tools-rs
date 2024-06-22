@@ -8,6 +8,22 @@ fn main() {
 
 #[cfg(not(target_env = "msvc"))]
 fn find_libarchive() {
+    const MACOS_HOMEBREW_LIBARCHIVE_PATH: &str = "/opt/homebrew/opt/libarchive/lib/pkgconfig/";
+
+    if cfg!(target_os = "macos")
+        && pkg_config::Config::new()
+            .atleast_version("3.2.0")
+            .probe("libarchive")
+            .is_err()
+        && std::path::Path::new(MACOS_HOMEBREW_LIBARCHIVE_PATH).exists()
+    {
+        // on OSX brew doesn't install libarchive in the default path...
+        // try that workaround as it's a pain providing this in the env e.g.
+        // for vs code usage.
+        // todo should add to current one and set afterwards to current value!
+        std::env::set_var("PKG_CONFIG_PATH", MACOS_HOMEBREW_LIBARCHIVE_PATH);
+    }
+
     pkg_config::Config::new()
         .atleast_version("3.2.0")
         .probe("libarchive")
