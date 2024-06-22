@@ -326,10 +326,17 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         {
             ffi::ARCHIVE_EOF => ArchiveContents::EndOfEntry,
             ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => {
-                let content = slice::from_raw_parts(buffer as *const u8, size);
-                let write = target.write_all(content);
-                if let Err(e) = write {
-                    ArchiveContents::Err(e.into())
+                if size > 0 {
+                    // fixes: (as buffer is null then) unsafe precondition(s) violated:
+                    // slice::from_raw_parts requires the pointer to be aligned and non-null, and
+                    // the total size of the slice not to exceed `isize::MAX`
+                    let content = slice::from_raw_parts(buffer as *const u8, size);
+                    let write = target.write_all(content);
+                    if let Err(e) = write {
+                        ArchiveContents::Err(e.into())
+                    } else {
+                        ArchiveContents::DataChunk(target)
+                    }
                 } else {
                     ArchiveContents::DataChunk(target)
                 }
