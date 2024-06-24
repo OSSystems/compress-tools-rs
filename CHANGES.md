@@ -4,7 +4,7 @@
 
 ## [Unreleased] - ReleaseDate
 
-* Raise MSRV to 1.63.0
+* Raise MSRV to 1.65.0
 * Fix use slice::from_raw_parts only if size > 0 [#126]
 
 [#126]: https://github.com/OSSystems/compress-tools-rs/pull/126
