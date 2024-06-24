@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install libarchive-dev
+        run: sudo apt-get update; sudo apt-get install libarchive-dev libb2-dev liblz4-dev libacl1-dev libzstd-dev nettle-dev
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install ${{ matrix.version }}

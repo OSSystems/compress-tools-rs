@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install libarchive-dev
+        run: sudo apt-get update; sudo apt-get install libarchive-dev libb2-dev liblz4-dev libacl1-dev libzstd-dev nettle-dev
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
