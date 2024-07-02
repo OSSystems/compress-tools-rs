@@ -106,6 +106,12 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    pub(crate) fn archive_read_add_passphrase(
+        arg1: *mut archive,
+        arg2: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub(crate) fn archive_read_close(arg1: *mut archive) -> ::std::os::raw::c_int;
 }
 extern "C" {
