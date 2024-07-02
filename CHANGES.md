@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.15.0] - 2024-07-02
+
 * Raise MSRV to 1.65.0
 * Add next_header() to ArchiveIterator [#122]
 * Fix use slice::from_raw_parts only if size > 0 [#126]
