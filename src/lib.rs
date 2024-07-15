@@ -618,6 +618,10 @@ where
             value => archive_result(value, archive_reader)?,
         }
 
+        if size == 0 {
+            return Ok(written);
+        }
+
         let content = slice::from_raw_parts(buffer as *const u8, size);
         target.write_all(content)?;
         written += size;
