@@ -854,3 +854,10 @@ fn iterate_archive_with_filter_path() {
         "filtered file list inside the archive did not match"
     );
 }
+
+#[test]
+fn test_slice_from_raw_parts() {
+    let mut source = std::fs::File::open("tests/fixtures/slice_from_raw_parts.zip").unwrap();
+    let mut outfile = tempfile::NamedTempFile::new().unwrap();
+    uncompress_archive_file(&mut source, &mut outfile, "1/2/1.txt").unwrap();
+}
