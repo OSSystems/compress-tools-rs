@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.15.1] - 2024-07-16
+
 * Bugfix: unsafe precondition(s) violated: slice::from_raw_parts requires the pointer to be aligned and non-null, and the total size of the slice not to exceed isize::MAX [#129]
 
 [#129] https://github.com/OSSystems/compress-tools-rs/pull/129
