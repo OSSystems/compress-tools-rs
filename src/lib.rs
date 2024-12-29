@@ -619,7 +619,7 @@ where
         }
 
         if size == 0 {
-            return Ok(written);
+            continue;
         }
 
         let content = slice::from_raw_parts(buffer as *const u8, size);
