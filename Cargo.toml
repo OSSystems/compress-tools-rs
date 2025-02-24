@@ -24,7 +24,7 @@ all-features = true
 coveralls = { repository = "ossystems/compress-tools-rs" }
 
 [dependencies]
-derive_more = { version = "0.99", default-features = false, features = ["display", "from", "error"] }
+derive_more = { version = "2.0", default-features = false, features = ["display", "from", "error"] }
 async-trait = { version = "0.1.39", optional = true }
 futures-channel = { version = "0.3.5", features = ["sink"], optional = true }
 futures-core = { version = "0.3.5", optional = true }
