@@ -50,6 +50,27 @@ fn find_libarchive() {
     if cfg!(feature = "static") {
         println!("cargo:rustc-link-lib=static=archive");
     }
+    if cfg!(feature = "static_b2") {
+        println!("cargo:rustc-link-lib=static=b2");
+    }
+    if cfg!(feature = "static_lz4") {
+        println!("cargo:rustc-link-lib=static=lz4");
+    }
+    if cfg!(feature = "static_zstd") {
+        println!("cargo:rustc-link-lib=static=zstd");
+    }
+    if cfg!(feature = "static_lzma") {
+        println!("cargo:rustc-link-lib=static=lzma");
+    }
+    if cfg!(feature = "static_bz2") {
+        println!("cargo:rustc-link-lib=static=bz2");
+    }
+    if cfg!(feature = "static_z") {
+        println!("cargo:rustc-link-lib=static=z");
+    }
+    if cfg!(feature = "static_xml2") {
+        println!("cargo:rustc-link-lib=static=xml2");
+    }
 }
 
 #[cfg(target_env = "msvc")]
