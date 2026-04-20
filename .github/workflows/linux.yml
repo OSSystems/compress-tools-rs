@@ -26,6 +26,16 @@ jobs:
         run: sudo apt-get update; sudo apt-get install libarchive-dev libb2-dev liblz4-dev libacl1-dev libzstd-dev nettle-dev
       - name: Checkout sources
         uses: actions/checkout@v4
+      - name: Install stable toolchain (MSRV-aware lockfile resolution)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable-x86_64-unknown-linux-gnu
+          profile: minimal
+          override: true
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+        env:
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
         with:
@@ -38,11 +48,6 @@ jobs:
         with:
           crate: grcov
           use-tool-cache: true
-
-      - name: Generate Cargo.lock
-        uses: actions-rs/cargo@v1
-        with:
-          command: generate-lockfile
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:

@@ -29,17 +29,22 @@ jobs:
           echo PKG_CONFIG_PATH=$(brew ls libarchive | grep .pc$ | sed 's|/libarchive.pc||') >> $GITHUB_ENV
       - name: Checkout sources
         uses: actions/checkout@v4
+      - name: Install stable toolchain (MSRV-aware lockfile resolution)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable-aarch64-apple-darwin
+          profile: minimal
+          override: true
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+        env:
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.version }}-aarch64-apple-darwin
           profile: minimal
           override: true
-
-      - name: Generate Cargo.lock
-        uses: actions-rs/cargo@v1
-        with:
-          command: generate-lockfile
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
