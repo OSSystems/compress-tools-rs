@@ -19,8 +19,8 @@
         rust-toolchain = with rust.packages.${system};
           let
             msrvToolchain = toolchainOf {
-              channel = "1.65.0";
-              sha256 = "sha256-DzNEaW724O8/B8844tt5AVHmSjSQ3cmzlU4BP90oRlY=";
+              channel = "1.71.0";
+              sha256 = "sha256-ks0nMEGGXKrHnfv4Fku+vhQ7gx76ruv6Ij4fKZR3l78=";
             };
           in
           combine [
