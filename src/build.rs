@@ -24,21 +24,33 @@ fn find_libarchive() {
         std::env::set_var("PKG_CONFIG_PATH", MACOS_HOMEBREW_LIBARCHIVE_PATH);
     }
 
-    if cfg!(feature = "static") {
+    let probe_static = |pc_name: &str| {
         pkg_config::Config::new()
-            .statik(cfg!(feature = "static"))
-            .probe("libb2")
-            .expect("Unable to find libb2");
+            .statik(true)
+            .probe(pc_name)
+            .unwrap_or_else(|e| panic!("Unable to find {pc_name}: {e}"));
+    };
 
-        pkg_config::Config::new()
-            .statik(cfg!(feature = "static"))
-            .probe("liblz4")
-            .expect("Unable to find liblz4");
-
-        pkg_config::Config::new()
-            .statik(cfg!(feature = "static"))
-            .probe("libzstd")
-            .expect("Unable to find libzstd");
+    if cfg!(feature = "static_b2") {
+        probe_static("libb2");
+    }
+    if cfg!(feature = "static_lz4") {
+        probe_static("liblz4");
+    }
+    if cfg!(feature = "static_zstd") {
+        probe_static("libzstd");
+    }
+    if cfg!(feature = "static_lzma") {
+        probe_static("liblzma");
+    }
+    if cfg!(feature = "static_bz2") {
+        probe_static("bzip2");
+    }
+    if cfg!(feature = "static_z") {
+        probe_static("zlib");
+    }
+    if cfg!(feature = "static_xml2") {
+        probe_static("libxml-2.0");
     }
 
     pkg_config::Config::new()
@@ -59,7 +71,16 @@ fn find_libarchive() {
         .expect("Unable to find libarchive");
 
     println!("cargo:rustc-link-lib=static=archive");
-    println!("cargo:rustc-link-lib=User32");
-    println!("cargo:rustc-link-lib=Crypt32");
-    println!("cargo:rustc-link-lib=advapi32");
+    if cfg!(feature = "win_user32") {
+        println!("cargo:rustc-link-lib=User32");
+    }
+    if cfg!(feature = "win_crypt32") {
+        println!("cargo:rustc-link-lib=Crypt32");
+    }
+    if cfg!(feature = "win_advapi32") {
+        println!("cargo:rustc-link-lib=advapi32");
+    }
+    if cfg!(feature = "win_xmllite") {
+        println!("cargo:rustc-link-lib=xmllite");
+    }
 }

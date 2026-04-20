@@ -9,12 +9,19 @@
 * Propagate `ENOSPC` during archive extraction instead of silently truncating files [#144]
 * flake: add `libb2`, `lz4`, and `zstd` to the development shell [#145]
 * Raise MSRV to 1.82.0 to match dependency tree [#146]
+* Add selective static linking features (`static_b2`, `static_lz4`,
+  `static_zstd`, `static_lzma`, `static_bz2`, `static_z`, `static_xml2`) and
+  make the Windows system imports (`win_user32`, `win_crypt32`, `win_advapi32`,
+  `win_xmllite`) user-selectable; the `static` meta-feature still enables them
+  all. `win_xmllite` also fixes the pre-existing `CreateXmlReader` link error
+  in the Windows static build when libarchive's XAR format is included [#148]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#141]: https://github.com/OSSystems/compress-tools-rs/pull/141
 [#144]: https://github.com/OSSystems/compress-tools-rs/pull/144
 [#145]: https://github.com/OSSystems/compress-tools-rs/pull/145
 [#146]: https://github.com/OSSystems/compress-tools-rs/pull/146
+[#148]: https://github.com/OSSystems/compress-tools-rs/pull/148
 
 ## [0.15.1] - 2024-07-16
 
