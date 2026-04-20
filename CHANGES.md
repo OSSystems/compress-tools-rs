@@ -6,11 +6,13 @@
 
 * Fix partial unfinished archive reads [#133]
 * Add missing `advapi32` link library on Windows builds [#141]
+* Propagate `ENOSPC` during archive extraction instead of silently truncating files [#144]
 * flake: add `libb2`, `lz4`, and `zstd` to the development shell [#145]
 * Raise MSRV to 1.82.0 to match dependency tree [#146]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#141]: https://github.com/OSSystems/compress-tools-rs/pull/141
+[#144]: https://github.com/OSSystems/compress-tools-rs/pull/144
 [#145]: https://github.com/OSSystems/compress-tools-rs/pull/145
 [#146]: https://github.com/OSSystems/compress-tools-rs/pull/146
 
