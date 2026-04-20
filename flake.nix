@@ -37,6 +37,11 @@
             rust-bindgen
             pkg-config
             libarchive
+            # Required by the `static` feature (build.rs probes these via
+            # pkg-config when libarchive is linked statically).
+            libb2
+            lz4
+            zstd
             clang
             llvmPackages.libclang
 
