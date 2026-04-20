@@ -38,6 +38,19 @@ pub(crate) fn archive_result(value: i32, archive: *mut ffi::archive) -> Result<(
     }
 }
 
+/// Like [`archive_result`], but treats `ARCHIVE_WARN` as an error.
+///
+/// Use this on call sites where a warning indicates user-visible data loss —
+/// for example, `archive_write_header` and `archive_write_data_block`, which
+/// can return `ARCHIVE_WARN` when the target filesystem returns `ENOSPC`. See
+/// https://github.com/OSSystems/compress-tools-rs/issues/142.
+pub(crate) fn archive_result_strict(value: i32, archive: *mut ffi::archive) -> Result<()> {
+    match value {
+        ffi::ARCHIVE_OK => Ok(()),
+        _ => Err(Error::from(archive)),
+    }
+}
+
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 impl From<*mut ffi::archive> for Error {
     fn from(input: *mut ffi::archive) -> Self {
