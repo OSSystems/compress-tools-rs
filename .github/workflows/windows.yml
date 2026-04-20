@@ -49,17 +49,22 @@ jobs:
         env:
           VCPKG_ROOT: 'C:\vcpkg'
 
+      - name: Install stable toolchain (MSRV-aware lockfile resolution)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable-x86_64-pc-windows-msvc
+          profile: minimal
+          override: true
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+        env:
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.version }}-x86_64-pc-windows-msvc
           profile: minimal
           override: true
-
-      - name: Generate Cargo.lock
-        uses: actions-rs/cargo@v1
-        with:
-          command: generate-lockfile
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
