@@ -57,7 +57,7 @@ mod iterator;
 #[cfg(feature = "tokio_support")]
 pub mod tokio_support;
 
-use error::archive_result;
+use error::{archive_result, archive_result_strict};
 pub use error::{Error, Result};
 use io::{Seek, SeekFrom};
 pub use iterator::{ArchiveContents, ArchiveIterator, ArchiveIteratorBuilder};
@@ -273,10 +273,13 @@ where
                     ffi::archive_entry_set_hardlink(entry, target_path.as_ptr());
                 }
 
-                ffi::archive_write_header(archive_writer, entry);
+                archive_result_strict(
+                    ffi::archive_write_header(archive_writer, entry),
+                    archive_writer,
+                )?;
                 libarchive_copy_data(archive_reader, archive_writer)?;
 
-                archive_result(
+                archive_result_strict(
                     ffi::archive_write_finish_entry(archive_writer),
                     archive_writer,
                 )?;
@@ -573,7 +576,7 @@ fn libarchive_copy_data(
                 value => archive_result(value, archive_reader)?,
             }
 
-            archive_result(
+            archive_result_strict(
                 /* Might depending on the version of libarchive on success
                  * return 0 or the number of bytes written,
                  * see man:archive_write_data(3) */
