@@ -25,8 +25,16 @@ jobs:
       - name: Install Dependencies
         run: |
           brew install pkgconfig
-          brew install libarchive
-          echo PKG_CONFIG_PATH=$(brew ls libarchive | grep .pc$ | sed 's|/libarchive.pc||') >> $GITHUB_ENV
+          brew install libarchive libb2 lz4 zstd xz bzip2 zlib libxml2
+          # Collect pkg-config dirs for keg-only formulae plus libarchive.
+          PKG_CONFIG_PATHS=""
+          for formula in libarchive bzip2 zlib libxml2; do
+            pcdir="$(brew --prefix "$formula")/lib/pkgconfig"
+            if [ -d "$pcdir" ]; then
+              PKG_CONFIG_PATHS="${PKG_CONFIG_PATHS:+$PKG_CONFIG_PATHS:}$pcdir"
+            fi
+          done
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATHS" >> "$GITHUB_ENV"
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
