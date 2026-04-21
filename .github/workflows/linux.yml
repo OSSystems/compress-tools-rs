@@ -19,7 +19,7 @@ jobs:
           - nightly
 
     name: Test ${{ matrix.version }} - x86_64-unknown-linux-gnu
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Install Dependencies
@@ -27,27 +27,20 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable-x86_64-unknown-linux-gnu
-          profile: minimal
-          override: true
+        uses: dtolnay/rust-toolchain@stable
       - name: Generate Cargo.lock
         run: cargo generate-lockfile
         env:
           CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.version }}-x86_64-unknown-linux-gnu
-          profile: minimal
-          override: true
+          toolchain: ${{ matrix.version }}
       - name: Install grcov tool
         if: matrix.version == 'nightly'
-        uses: actions-rs/install@v0.1
+        uses: taiki-e/install-action@v2
         with:
-          crate: grcov
-          use-tool-cache: true
+          tool: grcov
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -65,30 +58,31 @@ jobs:
           key: ${{ matrix.version }}-x86_64-unknown-linux-gnu-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Check build
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --release --all --bins --examples --tests
+        run: cargo check --release --all --bins --examples --tests
 
       - name: Tests
-        uses: actions-rs/cargo@v1
         timeout-minutes: 10
-        with:
-          command: test
-          args: --release --all --all-features --no-fail-fast -- --nocapture
+        run: cargo test --release --all --all-features --no-fail-fast -- --nocapture
 
       - name: Run cargo test with coverage
         if: matrix.version == 'nightly'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all --all-features --no-fail-fast -- --nocapture
+        run: cargo test --all --all-features --no-fail-fast -- --nocapture
         env:
           CARGO_INCREMENTAL: "0"
           RUSTFLAGS: "-Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort"
       - id: coverage
         if: matrix.version == 'nightly'
-        uses: actions-rs/grcov@master
+        name: Gather coverage with grcov
+        run: |
+          grcov . \
+            --binary-path ./target/debug/ \
+            -s . \
+            -t lcov \
+            --branch \
+            --ignore-not-existing \
+            --ignore '/*' \
+            -o lcov.info
+          echo "report=lcov.info" >> "$GITHUB_OUTPUT"
       - name: Coveralls upload
         if: matrix.version == 'nightly'
         uses: coverallsapp/github-action@master
