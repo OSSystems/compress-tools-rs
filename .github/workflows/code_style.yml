@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install libarchive-dev libb2-dev liblz4-dev libacl1-dev libzstd-dev nettle-dev
+        run: sudo apt-get update; sudo apt-get install libarchive-dev libb2-dev liblz4-dev libacl1-dev libzstd-dev liblzma-dev libbz2-dev zlib1g-dev libxml2-dev nettle-dev
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
         with:
