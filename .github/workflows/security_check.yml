@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install stable toolchain (MSRV-aware lockfile resolution)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+        env:
+          CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
