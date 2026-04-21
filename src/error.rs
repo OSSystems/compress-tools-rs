@@ -11,8 +11,27 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Display, From, Error, Debug)]
 #[non_exhaustive]
 pub enum Error {
-    #[display("Extraction error: '{}'", _0)]
-    Extraction(#[error(not(source))] String),
+    #[display(
+        "Extraction error:{}{} '{}'",
+        match code {
+            Some(_) => " ",
+            None => ""
+        },
+        if let Some(e) = code {
+            e as &dyn std::fmt::Display
+        } else {
+            &"" as &_
+        },
+        details
+    )]
+    Extraction {
+        /// The code stemming from `archive_errno`, unless it is not a valid
+        /// value for `errno(3)`, like `ARCHIVE_ERRNO_MISC`
+        #[error(source)]
+        code: Option<io::Error>,
+        /// The string returned by `archive_error_string`
+        details: String,
+    },
 
     Io(io::Error),
 
@@ -62,20 +81,27 @@ pub(crate) fn archive_result_strict(value: i32, archive: *mut ffi::archive) -> R
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
 impl From<*mut ffi::archive> for Error {
     fn from(input: *mut ffi::archive) -> Self {
-        unsafe {
+        let (details, code) = unsafe {
             let error_string = ffi::archive_error_string(input);
-            if !error_string.is_null() {
-                return Error::Extraction(
-                    CStr::from_ptr(error_string).to_string_lossy().to_string(),
-                );
-            }
+            let details = if !error_string.is_null() {
+                Some(CStr::from_ptr(error_string).to_string_lossy().into_owned())
+            } else {
+                None
+            };
 
             let errno = ffi::archive_errno(input);
-            if errno != 0 {
-                return io::Error::from_raw_os_error(errno).into();
-            }
+            let code = if errno > 0 {
+                Some(io::Error::from_raw_os_error(errno))
+            } else {
+                // 0 (unexpected) or ARCHIVE_ERRNO_MISC which is not a valid value of errno(3)
+                None
+            };
+            (details, code)
+        };
+        match (details, code) {
+            (Some(details), code) => Error::Extraction { code, details },
+            (None, Some(code)) => Error::Io(code),
+            (None, None) => Error::Unknown,
         }
-
-        Error::Unknown
     }
 }

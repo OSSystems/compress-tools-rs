@@ -18,6 +18,7 @@
 
 use compress_tools::{uncompress_archive, Ownership};
 use std::{
+    error::Error,
     ffi::CString,
     fs::{self, File},
     io::Write,
@@ -134,7 +135,16 @@ unsafe fn run_child(archive: &Path, target: &Path) -> ! {
 
     let result = uncompress_archive(&mut src, target, Ownership::Ignore);
     eprintln!("child: uncompress_archive result = {result:?}");
-    process::exit(if result.is_err() { OK } else { BUG_REPRODUCED });
+    let errno = result.as_ref().err().and_then(|e| {
+        e.source()
+            .and_then(|s| s.downcast_ref::<std::io::Error>())
+            .and_then(std::io::Error::raw_os_error)
+    });
+    process::exit(if errno == Some(libc::ENOSPC) {
+        OK
+    } else {
+        BUG_REPRODUCED
+    });
 }
 
 unsafe fn write_proc(path: &str, content: &str) -> bool {

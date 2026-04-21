@@ -34,6 +34,10 @@
   change:** `async_support::list_archive_files`, `uncompress_archive`, and
   `uncompress_archive_file` now require `AsyncRead + AsyncSeek` on the source;
   wrap `tokio::fs::File` via `tokio_util::compat` as needed [#96]
+* **Breaking:** `Error::Extraction` now records the underlying value of
+  `archive_errno` as a `std::io::Error` when available, in addition to the
+  string error message. Match arms for `Error::Extraction(msg)` should be
+  rewritten as `Error::Extraction { details, .. }`. [#151]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#136]: https://github.com/OSSystems/compress-tools-rs/issues/136
@@ -47,6 +51,7 @@
 [#154]: https://github.com/OSSystems/compress-tools-rs/pull/154
 [#158]: https://github.com/OSSystems/compress-tools-rs/pull/158
 [#96]: https://github.com/OSSystems/compress-tools-rs/issues/96
+[#151]: https://github.com/OSSystems/compress-tools-rs/pull/151
 
 ## [0.15.1] - 2024-07-16
 
