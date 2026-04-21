@@ -44,7 +44,17 @@ fn find_libarchive() {
         probe_static("liblzma");
     }
     if cfg!(feature = "static_bz2") {
-        println!("cargo:rustc-link-lib=static=bz2");
+        // bzip2 upstream (and Ubuntu's libbz2-dev) ships no .pc file, but
+        // Homebrew's bzip2 does. Try pkg-config so we pick up search paths on
+        // macOS; fall back to a bare link directive when pkg-config has
+        // nothing, relying on the system library search path.
+        if pkg_config::Config::new()
+            .statik(true)
+            .probe("bzip2")
+            .is_err()
+        {
+            println!("cargo:rustc-link-lib=static=bz2");
+        }
     }
     if cfg!(feature = "static_z") {
         probe_static("zlib");
