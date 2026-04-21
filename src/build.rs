@@ -44,7 +44,7 @@ fn find_libarchive() {
         probe_static("liblzma");
     }
     if cfg!(feature = "static_bz2") {
-        probe_static("bzip2");
+        println!("cargo:rustc-link-lib=static=bz2");
     }
     if cfg!(feature = "static_z") {
         probe_static("zlib");
