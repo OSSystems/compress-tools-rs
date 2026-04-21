@@ -30,21 +30,15 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable-aarch64-apple-darwin
-          profile: minimal
-          override: true
+        uses: dtolnay/rust-toolchain@stable
       - name: Generate Cargo.lock
         run: cargo generate-lockfile
         env:
           CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.version }}-aarch64-apple-darwin
-          profile: minimal
-          override: true
+          toolchain: ${{ matrix.version }}
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -62,14 +56,8 @@ jobs:
           key: ${{ matrix.version }}-aarch64-apple-darwin-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Check build
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --release --all --bins --examples --tests
+        run: cargo check --release --all --bins --examples --tests
 
       - name: Tests
-        uses: actions-rs/cargo@v1
         timeout-minutes: 10
-        with:
-          command: test
-          args: --release --all --all-features --no-fail-fast -- --nocapture
+        run: cargo test --release --all --all-features --no-fail-fast -- --nocapture

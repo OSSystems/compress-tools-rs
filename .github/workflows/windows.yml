@@ -50,21 +50,15 @@ jobs:
           VCPKG_ROOT: 'C:\vcpkg'
 
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable-x86_64-pc-windows-msvc
-          profile: minimal
-          override: true
+        uses: dtolnay/rust-toolchain@stable
       - name: Generate Cargo.lock
         run: cargo generate-lockfile
         env:
           CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
       - name: Install ${{ matrix.version }}
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.version }}-x86_64-pc-windows-msvc
-          profile: minimal
-          override: true
+          toolchain: ${{ matrix.version }}
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -82,22 +76,16 @@ jobs:
           key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Check build
-        uses: actions-rs/cargo@v1
         env:
           RUSTFLAGS: ${{ matrix.linkage == 'x64-windows-static' && '-C target-feature=+crt-static' || '' }}
           VCPKGRS_DYNAMIC: ${{ matrix.linkage == 'x64-windows' && 1 || 0 }}
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.linkage }}
-        with:
-          command: check
-          args: --release --all --bins --examples --tests
+        run: cargo check --release --all --bins --examples --tests
 
       - name: Test
-        uses: actions-rs/cargo@v1
         timeout-minutes: 10
         env:
           RUSTFLAGS: ${{ matrix.linkage == 'x64-windows-static' && '-C target-feature=+crt-static' || '' }}
           VCPKGRS_DYNAMIC: ${{ matrix.linkage == 'x64-windows' && 1 || 0 }}
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.linkage }}
-        with:
-          command: test
-          args: --release --all --all-features --no-fail-fast -- --nocapture
+        run: cargo test --release --all --all-features --no-fail-fast -- --nocapture
