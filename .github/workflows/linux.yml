@@ -36,6 +36,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.version }}
+          components: ${{ matrix.version == 'nightly' && 'llvm-tools-preview' || '' }}
       - name: Install grcov tool
         if: matrix.version == 'nightly'
         uses: taiki-e/install-action@v2
@@ -69,7 +70,8 @@ jobs:
         run: cargo test --all --all-features --no-fail-fast -- --nocapture
         env:
           CARGO_INCREMENTAL: "0"
-          RUSTFLAGS: "-Zprofile -Zpanic_abort_tests -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort"
+          RUSTFLAGS: "-Cinstrument-coverage"
+          LLVM_PROFILE_FILE: "target/coverage-%p-%m.profraw"
       - id: coverage
         if: matrix.version == 'nightly'
         name: Gather coverage with grcov
@@ -92,4 +94,4 @@ jobs:
       - name: Clear the coverage files from cache
         if: matrix.version == 'nightly'
         run: |
-          find target/ -name "*.gcda" -exec rm {} +
+          find target/ -name "*.profraw" -exec rm {} +

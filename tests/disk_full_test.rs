@@ -45,7 +45,8 @@ fn uncompress_archive_errors_when_target_is_full() {
                 let mut status: libc::c_int = 0;
                 let waited = libc::waitpid(pid, &mut status, 0);
                 assert_eq!(
-                    waited, pid,
+                    waited,
+                    pid,
                     "waitpid failed: {}",
                     std::io::Error::last_os_error()
                 );
@@ -77,10 +78,7 @@ unsafe fn run_child(archive: &Path, target: &Path) -> ! {
     let gid = libc::getgid();
 
     if libc::unshare(libc::CLONE_NEWUSER | libc::CLONE_NEWNS) != 0 {
-        eprintln!(
-            "child: unshare failed: {}",
-            std::io::Error::last_os_error()
-        );
+        eprintln!("child: unshare failed: {}", std::io::Error::last_os_error());
         process::exit(SKIPPED);
     }
 
