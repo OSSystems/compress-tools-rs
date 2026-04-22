@@ -963,6 +963,11 @@ fn test_slice_from_raw_parts() {
     uncompress_archive_file(&mut source, &mut outfile, "1/2/1.txt").unwrap();
 }
 
+// The fixture is encrypted with WinZip AES (ZIP method 99). vcpkg's
+// `x64-windows-static` libarchive build omits the AES crypto backend, so
+// `archive_read_data_block` fails at runtime on that triplet even though the
+// dynamic Windows build decrypts it correctly.
+#[cfg(not(all(windows, target_feature = "crt-static")))]
 #[test]
 fn iterate_archive_with_password() {
     let source = std::fs::File::open("tests/fixtures/with-password.zip").unwrap();
