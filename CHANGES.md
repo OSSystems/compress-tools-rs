@@ -17,6 +17,8 @@
   in the Windows static build when libarchive's XAR format is included [#148]
 * Fix incorrect `stat` struct layout on Windows causing corrupted metadata
   (`st_size`, `st_{a,m,c}time`) in `ArchiveIterator` entries [#138]
+* Upgrade `derive_more` from 0.99 to 2.1 and refresh `Cargo.lock` to the
+  latest versions compatible with MSRV 1.82.0 [#154]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#138]: https://github.com/OSSystems/compress-tools-rs/issues/138
@@ -25,6 +27,7 @@
 [#145]: https://github.com/OSSystems/compress-tools-rs/pull/145
 [#146]: https://github.com/OSSystems/compress-tools-rs/pull/146
 [#148]: https://github.com/OSSystems/compress-tools-rs/pull/148
+[#154]: https://github.com/OSSystems/compress-tools-rs/pull/154
 
 ## [0.15.1] - 2024-07-16
 
