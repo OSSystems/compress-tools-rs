@@ -6,6 +6,11 @@ use std::{
 
 use libc::{c_int, c_void};
 
+#[cfg(target_os = "windows")]
+use crate::stat;
+#[cfg(not(target_os = "windows"))]
+use libc::stat;
+
 use crate::{
     error::archive_result, ffi, ffi::UTF8LocaleGuard, DecodeCallback, Error, Result,
     READER_BUFFER_SIZE,
@@ -26,7 +31,7 @@ struct HeapReadSeekerPipe<R: Read + Seek> {
 /// completion.
 pub enum ArchiveContents {
     /// Marks the start of an entry, either a file or a directory.
-    StartOfEntry(String, libc::stat),
+    StartOfEntry(String, stat),
     /// A chunk of uncompressed data from the entry. Entries may have zero or
     /// more chunks.
     DataChunk(Vec<u8>),
@@ -42,7 +47,7 @@ pub enum ArchiveContents {
 /// Gets called on an encounter of a new archive entry with the filename and
 /// file status information of that entry.
 /// The entry is processed on a return value of `true` and ignored on `false`.
-pub type EntryFilterCallbackFn = dyn Fn(&str, &libc::stat) -> bool;
+pub type EntryFilterCallbackFn = dyn Fn(&str, &stat) -> bool;
 
 /// An iterator over the contents of an archive.
 #[allow(clippy::module_name_repetitions)]
@@ -481,7 +486,7 @@ where
     /// By default all entries are iterated.
     pub fn filter<F>(mut self, filter: F) -> ArchiveIteratorBuilder<R>
     where
-        F: Fn(&str, &libc::stat) -> bool + 'static,
+        F: Fn(&str, &stat) -> bool + 'static,
     {
         self.filter = Some(Box::new(filter));
         self
