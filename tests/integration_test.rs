@@ -214,6 +214,142 @@ async fn list_archive_zip_tokio() {
 
 #[test]
 #[cfg(feature = "futures_support")]
+fn extract_archive_zip_futures() {
+    smol::block_on(async {
+        let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+        let source = smol::fs::File::open("tests/fixtures/test.zip")
+            .await
+            .unwrap();
+
+        futures_support::uncompress_archive(source, dir.path(), Ownership::Ignore)
+            .await
+            .expect("Failed to extract zip");
+
+        assert!(dir.path().join("content/first").exists());
+        assert!(dir.path().join("content/third").exists());
+        assert!(dir.path().join("content/nested/second").exists());
+    });
+}
+
+#[tokio::test]
+#[cfg(feature = "tokio_support")]
+async fn extract_archive_zip_tokio() {
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let source = tokio::fs::File::open("tests/fixtures/test.zip")
+        .await
+        .unwrap();
+
+    tokio_support::uncompress_archive(source, dir.path(), Ownership::Ignore)
+        .await
+        .expect("Failed to extract zip");
+
+    assert!(dir.path().join("content/first").exists());
+    assert!(dir.path().join("content/third").exists());
+    assert!(dir.path().join("content/nested/second").exists());
+}
+
+#[test]
+#[cfg(feature = "futures_support")]
+fn uncompress_archive_file_zip_futures() {
+    smol::block_on(async {
+        let source = smol::fs::File::open("tests/fixtures/test.zip")
+            .await
+            .unwrap();
+        let mut target = Vec::<u8>::default();
+
+        futures_support::uncompress_archive_file(source, &mut target, "content/first")
+            .await
+            .expect("Failed to extract content/first");
+
+        assert!(
+            !target.is_empty(),
+            "extracted file content should not be empty"
+        );
+    });
+}
+
+#[tokio::test]
+#[cfg(feature = "tokio_support")]
+async fn uncompress_archive_file_zip_tokio() {
+    let source = tokio::fs::File::open("tests/fixtures/test.zip")
+        .await
+        .unwrap();
+    let mut target = Vec::<u8>::default();
+
+    tokio_support::uncompress_archive_file(source, &mut target, "content/first")
+        .await
+        .expect("Failed to extract content/first");
+
+    assert!(
+        !target.is_empty(),
+        "extracted file content should not be empty"
+    );
+}
+
+#[test]
+#[cfg(feature = "futures_support")]
+fn iterate_archive_zip_futures() {
+    use futures_util::stream::StreamExt;
+
+    smol::block_on(async {
+        let source = smol::fs::File::open("tests/fixtures/test.zip")
+            .await
+            .unwrap();
+
+        let mut iter = futures_support::ArchiveIteratorBuilder::new(source).build();
+
+        let mut names = Vec::new();
+        while let Some(content) = iter.next().await {
+            if let ArchiveContents::StartOfEntry(name, _) = content {
+                names.push(name);
+            }
+        }
+
+        assert_eq!(
+            names,
+            vec![
+                "content/".to_string(),
+                "content/first".to_string(),
+                "content/third".to_string(),
+                "content/nested/".to_string(),
+                "content/nested/second".to_string(),
+            ],
+        );
+    });
+}
+
+#[tokio::test]
+#[cfg(feature = "tokio_support")]
+async fn iterate_archive_zip_tokio() {
+    use futures_util::stream::StreamExt;
+
+    let source = tokio::fs::File::open("tests/fixtures/test.zip")
+        .await
+        .unwrap();
+
+    let mut iter = tokio_support::ArchiveIteratorBuilder::new(source).build();
+
+    let mut names = Vec::new();
+    while let Some(content) = iter.next().await {
+        if let ArchiveContents::StartOfEntry(name, _) = content {
+            names.push(name);
+        }
+    }
+
+    assert_eq!(
+        names,
+        vec![
+            "content/".to_string(),
+            "content/first".to_string(),
+            "content/third".to_string(),
+            "content/nested/".to_string(),
+            "content/nested/second".to_string(),
+        ],
+    );
+}
+
+#[test]
+#[cfg(feature = "futures_support")]
 fn successfully_list_archive_files_futures() {
     smol::block_on(async {
         let source = smol::fs::File::open("tests/fixtures/tree.tar")
