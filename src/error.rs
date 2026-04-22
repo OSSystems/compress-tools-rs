@@ -11,23 +11,23 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Display, From, Error, Debug)]
 #[non_exhaustive]
 pub enum Error {
-    #[display(fmt = "Extraction error: '{}'", _0)]
+    #[display("Extraction error: '{}'", _0)]
     Extraction(#[error(not(source))] String),
 
     Io(io::Error),
 
     Utf(std::str::Utf8Error),
 
-    #[display(fmt = "Encoding error: '{}'", _0)]
+    #[display("Encoding error: '{}'", _0)]
     Encoding(#[error(not(source))] Cow<'static, str>),
 
     #[cfg(feature = "tokio_support")]
     JoinError(tokio::task::JoinError),
 
-    #[display(fmt = "Error to create the archive struct, is null")]
+    #[display("Error to create the archive struct, is null")]
     NullArchive,
 
-    #[display(fmt = "Unknown error")]
+    #[display("Unknown error")]
     Unknown,
 }
 
