@@ -15,8 +15,11 @@
   `win_xmllite`) user-selectable; the `static` meta-feature still enables them
   all. `win_xmllite` also fixes the pre-existing `CreateXmlReader` link error
   in the Windows static build when libarchive's XAR format is included [#148]
+* Fix incorrect `stat` struct layout on Windows causing corrupted metadata
+  (`st_size`, `st_{a,m,c}time`) in `ArchiveIterator` entries [#138]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
+[#138]: https://github.com/OSSystems/compress-tools-rs/issues/138
 [#141]: https://github.com/OSSystems/compress-tools-rs/pull/141
 [#144]: https://github.com/OSSystems/compress-tools-rs/pull/144
 [#145]: https://github.com/OSSystems/compress-tools-rs/pull/145

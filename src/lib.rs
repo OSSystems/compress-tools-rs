@@ -71,6 +71,30 @@ use std::{
 
 const READER_BUFFER_SIZE: usize = 16384;
 
+/// `stat` layout matching the one exposed by `libarchive` on Windows.
+///
+/// On Windows `libarchive`'s `archive_entry_stat()` returns a pointer to the
+/// struct declared in `<sys/stat.h>`, which differs from `libc::stat` (the
+/// latter is actually `stat64`). Using the wrong layout reads garbage for
+/// `st_size` and the three `st_*time` fields.
+#[cfg(target_os = "windows")]
+#[derive(Copy, Clone)]
+#[repr(C)]
+#[allow(non_camel_case_types)]
+pub struct stat {
+    pub st_dev: libc::dev_t,
+    pub st_ino: libc::ino_t,
+    pub st_mode: u16,
+    pub st_nlink: libc::c_short,
+    pub st_uid: libc::c_short,
+    pub st_gid: libc::c_short,
+    pub st_rdev: libc::dev_t,
+    pub st_size: i32,
+    pub st_atime: libc::time_t,
+    pub st_mtime: libc::time_t,
+    pub st_ctime: libc::time_t,
+}
+
 /// Determine the ownership behavior when unpacking the archive.
 #[derive(Clone, Copy, Debug)]
 pub enum Ownership {

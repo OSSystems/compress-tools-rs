@@ -21,52 +21,54 @@ cat <<EOF > $basedir/wrapper.h
 EOF
 
 bindgen \
-    \
-    --size_t-is-usize \
+    --formatter none \
     \
     --raw-line "#![allow(non_camel_case_types)]" \
+    --raw-line "#[cfg(not(target_os = \"windows\"))]" \
     --raw-line "use libc::stat;" \
+    --raw-line "#[cfg(target_os = \"windows\")]" \
+    --raw-line "use crate::stat;" \
     --raw-line "pub const ARCHIVE_EOF: i32 = 1;" \
     --raw-line "pub const ARCHIVE_OK: i32 = 0;" \
     \
-    --whitelist-var "ARCHIVE_WARN" \
+    --allowlist-var "ARCHIVE_WARN" \
     \
-    --whitelist-var "ARCHIVE_EXTRACT_TIME" \
-    --whitelist-var "ARCHIVE_EXTRACT_PERM" \
-    --whitelist-var "ARCHIVE_EXTRACT_ACL" \
-    --whitelist-var "ARCHIVE_EXTRACT_FFLAGS" \
-    --whitelist-var "ARCHIVE_EXTRACT_OWNER" \
-    --whitelist-var "ARCHIVE_EXTRACT_FFLAGS" \
-    --whitelist-var "ARCHIVE_EXTRACT_XATTR" \
-    --whitelist-function "archive_read_new" \
-    --whitelist-function "archive_read_set_seek_callback" \
-    --whitelist-function "archive_read_support_filter_all" \
-    --whitelist-function "archive_read_support_format_all" \
-    --whitelist-function "archive_read_support_format_raw" \
-    --whitelist-function "archive_read_close" \
-    --whitelist-function "archive_read_free" \
-    --whitelist-function "archive_read_data_block" \
-    --whitelist-function "archive_read_next_header" \
-    --whitelist-function "archive_read_open" \
-    --whitelist-function "archive_write_disk_new" \
-    --whitelist-function "archive_write_disk_set_options" \
-    --whitelist-function "archive_write_disk_set_standard_lookup" \
-    --whitelist-function "archive_write_header" \
-    --whitelist-function "archive_write_finish_entry" \
-    --whitelist-function "archive_write_data_block" \
-    --whitelist-function "archive_write_close" \
-    --whitelist-function "archive_write_free" \
-    --whitelist-function "archive_entry_pathname" \
-    --whitelist-function "archive_entry_free" \
-    --whitelist-function "archive_entry_set_pathname" \
-    --whitelist-function "archive_entry_set_hardlink" \
-    --whitelist-function "archive_entry_hardlink" \
+    --allowlist-var "ARCHIVE_EXTRACT_TIME" \
+    --allowlist-var "ARCHIVE_EXTRACT_PERM" \
+    --allowlist-var "ARCHIVE_EXTRACT_ACL" \
+    --allowlist-var "ARCHIVE_EXTRACT_FFLAGS" \
+    --allowlist-var "ARCHIVE_EXTRACT_OWNER" \
+    --allowlist-var "ARCHIVE_EXTRACT_FFLAGS" \
+    --allowlist-var "ARCHIVE_EXTRACT_XATTR" \
+    --allowlist-function "archive_read_new" \
+    --allowlist-function "archive_read_set_seek_callback" \
+    --allowlist-function "archive_read_support_filter_all" \
+    --allowlist-function "archive_read_support_format_all" \
+    --allowlist-function "archive_read_support_format_raw" \
+    --allowlist-function "archive_read_close" \
+    --allowlist-function "archive_read_free" \
+    --allowlist-function "archive_read_data_block" \
+    --allowlist-function "archive_read_next_header" \
+    --allowlist-function "archive_read_open" \
+    --allowlist-function "archive_write_disk_new" \
+    --allowlist-function "archive_write_disk_set_options" \
+    --allowlist-function "archive_write_disk_set_standard_lookup" \
+    --allowlist-function "archive_write_header" \
+    --allowlist-function "archive_write_finish_entry" \
+    --allowlist-function "archive_write_data_block" \
+    --allowlist-function "archive_write_close" \
+    --allowlist-function "archive_write_free" \
+    --allowlist-function "archive_entry_pathname" \
+    --allowlist-function "archive_entry_free" \
+    --allowlist-function "archive_entry_set_pathname" \
+    --allowlist-function "archive_entry_set_hardlink" \
+    --allowlist-function "archive_entry_hardlink" \
     --blocklist-type "stat" \
-    --blacklist-type "timespec" \
-    --whitelist-function "archive_entry_stat" \
-    --whitelist-function "archive_set_error" \
-    --whitelist-function "archive_error_string" \
-    --whitelist-function "archive_errno" \
+    --blocklist-type "timespec" \
+    --allowlist-function "archive_entry_stat" \
+    --allowlist-function "archive_set_error" \
+    --allowlist-function "archive_error_string" \
+    --allowlist-function "archive_errno" \
     \
     --output $basedir/src/ffi/generated.rs \
     \

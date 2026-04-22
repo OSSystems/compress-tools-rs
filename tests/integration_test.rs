@@ -541,9 +541,10 @@ fn collect_iterate_results_with_encoding(
 
     for content in &mut iter {
         match content {
-            ArchiveContents::StartOfEntry(file_name, _) => {
+            ArchiveContents::StartOfEntry(file_name, stat) => {
                 assert!(name.is_empty());
                 assert_eq!(size, 0);
+                assert_eq!(stat.st_size == 0, file_name.ends_with('/'));
                 name = file_name;
             }
             ArchiveContents::DataChunk(data) => {
