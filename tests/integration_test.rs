@@ -24,23 +24,25 @@ fn get_compressed_file_content() {
     assert_eq!(written, 18, "Uncompressed bytes count did not match");
 }
 
-#[async_std::test]
+#[test]
 #[cfg(feature = "futures_support")]
-async fn get_compressed_file_content_futures() {
-    let mut source = async_std::fs::File::open("tests/fixtures/file.txt.gz")
-        .await
-        .unwrap();
-    let mut target = Vec::default();
+fn get_compressed_file_content_futures() {
+    smol::block_on(async {
+        let mut source = smol::fs::File::open("tests/fixtures/file.txt.gz")
+            .await
+            .unwrap();
+        let mut target = Vec::default();
 
-    let written = futures_support::uncompress_data(&mut source, &mut target)
-        .await
-        .expect("Failed to uncompress the file");
-    assert_eq!(
-        String::from_utf8_lossy(&target),
-        "some_file_content\n",
-        "Uncompressed file did not match",
-    );
-    assert_eq!(written, 18, "Uncompressed bytes count did not match");
+        let written = futures_support::uncompress_data(&mut source, &mut target)
+            .await
+            .expect("Failed to uncompress the file");
+        assert_eq!(
+            String::from_utf8_lossy(&target),
+            "some_file_content\n",
+            "Uncompressed file did not match",
+        );
+        assert_eq!(written, 18, "Uncompressed bytes count did not match");
+    });
 }
 
 #[tokio::test]
@@ -92,24 +94,26 @@ fn get_a_file_from_7z() {
     assert_eq!(written, 14, "Uncompressed bytes count did not match");
 }
 
-#[async_std::test]
+#[test]
 #[cfg(feature = "futures_support")]
-async fn get_a_file_from_tar_futures() {
-    let mut source = async_std::fs::File::open("tests/fixtures/tree.tar")
-        .await
-        .unwrap();
-    let mut target = Vec::default();
-
-    let written =
-        futures_support::uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
+fn get_a_file_from_tar_futures() {
+    smol::block_on(async {
+        let mut source = smol::fs::File::open("tests/fixtures/tree.tar")
             .await
-            .expect("Failed to get the file");
-    assert_eq!(
-        String::from_utf8_lossy(&target),
-        "Goodbye World\n",
-        "Uncompressed file did not match",
-    );
-    assert_eq!(written, 14, "Uncompressed bytes count did not match");
+            .unwrap();
+        let mut target = Vec::default();
+
+        let written =
+            futures_support::uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
+                .await
+                .expect("Failed to get the file");
+        assert_eq!(
+            String::from_utf8_lossy(&target),
+            "Goodbye World\n",
+            "Uncompressed file did not match",
+        );
+        assert_eq!(written, 14, "Uncompressed bytes count did not match");
+    });
 }
 
 #[tokio::test]
@@ -149,24 +153,26 @@ fn successfully_list_archive_files() {
     );
 }
 
-#[async_std::test]
+#[test]
 #[cfg(feature = "futures_support")]
-async fn successfully_list_archive_files_futures() {
-    let source = async_std::fs::File::open("tests/fixtures/tree.tar")
-        .await
-        .unwrap();
+fn successfully_list_archive_files_futures() {
+    smol::block_on(async {
+        let source = smol::fs::File::open("tests/fixtures/tree.tar")
+            .await
+            .unwrap();
 
-    assert_eq!(
-        futures_support::list_archive_files(source).await.unwrap(),
-        vec![
-            "tree/".to_string(),
-            "tree/branch1/".to_string(),
-            "tree/branch1/leaf".to_string(),
-            "tree/branch2/".to_string(),
-            "tree/branch2/leaf".to_string(),
-        ],
-        "file list inside the archive did not match"
-    );
+        assert_eq!(
+            futures_support::list_archive_files(source).await.unwrap(),
+            vec![
+                "tree/".to_string(),
+                "tree/branch1/".to_string(),
+                "tree/branch1/leaf".to_string(),
+                "tree/branch2/".to_string(),
+                "tree/branch2/leaf".to_string(),
+            ],
+            "file list inside the archive did not match"
+        );
+    });
 }
 
 #[tokio::test]
@@ -429,31 +435,33 @@ fn uncompress_same_file_not_preserve_owner() {
     .expect("Failed to uncompress the file");
 }
 
-#[async_std::test]
+#[test]
 #[cfg(feature = "futures_support")]
-async fn uncompress_same_file_not_preserve_owner_futures() {
-    futures_support::uncompress_archive(
-        &mut async_std::fs::File::open("tests/fixtures/tree.tar")
-            .await
-            .unwrap(),
-        tempfile::TempDir::new()
-            .expect("Failed to create the tmp directory")
-            .path(),
-        Ownership::Ignore,
-    )
-    .await
-    .expect("Failed to uncompress the file");
-    futures_support::uncompress_archive(
-        &mut async_std::fs::File::open("tests/fixtures/tree.tar")
-            .await
-            .unwrap(),
-        tempfile::TempDir::new()
-            .expect("Failed to create the tmp directory")
-            .path(),
-        Ownership::Ignore,
-    )
-    .await
-    .expect("Failed to uncompress the file");
+fn uncompress_same_file_not_preserve_owner_futures() {
+    smol::block_on(async {
+        futures_support::uncompress_archive(
+            &mut smol::fs::File::open("tests/fixtures/tree.tar")
+                .await
+                .unwrap(),
+            tempfile::TempDir::new()
+                .expect("Failed to create the tmp directory")
+                .path(),
+            Ownership::Ignore,
+        )
+        .await
+        .expect("Failed to uncompress the file");
+        futures_support::uncompress_archive(
+            &mut smol::fs::File::open("tests/fixtures/tree.tar")
+                .await
+                .unwrap(),
+            tempfile::TempDir::new()
+                .expect("Failed to create the tmp directory")
+                .path(),
+            Ownership::Ignore,
+        )
+        .await
+        .expect("Failed to uncompress the file");
+    });
 }
 
 #[tokio::test]
@@ -494,19 +502,21 @@ fn uncompress_truncated_archive() {
     ));
 }
 
-#[async_std::test]
+#[test]
 #[cfg(feature = "futures_support")]
-async fn uncompress_truncated_archive_futures() {
-    assert!(matches!(
-        futures_support::uncompress_data(
-            async_std::fs::File::open("tests/fixtures/truncated.log.gz")
-                .await
-                .unwrap(),
-            Vec::new()
-        )
-        .await,
-        Err(Error::Unknown)
-    ));
+fn uncompress_truncated_archive_futures() {
+    smol::block_on(async {
+        assert!(matches!(
+            futures_support::uncompress_data(
+                smol::fs::File::open("tests/fixtures/truncated.log.gz")
+                    .await
+                    .unwrap(),
+                Vec::new()
+            )
+            .await,
+            Err(Error::Unknown)
+        ));
+    });
 }
 
 #[tokio::test]

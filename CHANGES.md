@@ -19,6 +19,8 @@
   (`st_size`, `st_{a,m,c}time`) in `ArchiveIterator` entries [#138]
 * Upgrade `derive_more` from 0.99 to 2.1 and refresh `Cargo.lock` to the
   latest versions compatible with MSRV 1.82.0 [#154]
+* Replace the discontinued `async-std` dev-dependency with `smol` in the
+  `futures_support` example and integration tests (RUSTSEC-2025-0052) [#153]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
 [#138]: https://github.com/OSSystems/compress-tools-rs/issues/138
@@ -27,6 +29,7 @@
 [#145]: https://github.com/OSSystems/compress-tools-rs/pull/145
 [#146]: https://github.com/OSSystems/compress-tools-rs/pull/146
 [#148]: https://github.com/OSSystems/compress-tools-rs/pull/148
+[#153]: https://github.com/OSSystems/compress-tools-rs/issues/153
 [#154]: https://github.com/OSSystems/compress-tools-rs/pull/154
 
 ## [0.15.1] - 2024-07-16
