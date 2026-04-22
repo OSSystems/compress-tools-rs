@@ -36,7 +36,7 @@ jobs:
           done
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATHS" >> "$GITHUB_ENV"
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
         uses: dtolnay/rust-toolchain@stable
       - name: Generate Cargo.lock
@@ -48,17 +48,17 @@ jobs:
         with:
           toolchain: ${{ matrix.version }}
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/registry
           key: ${{ matrix.version }}-aarch64-apple-darwin-cargo-registry-trimmed-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/git
           key: ${{ matrix.version }}-aarch64-apple-darwin-cargo-index-trimmed-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: target
           key: ${{ matrix.version }}-aarch64-apple-darwin-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}

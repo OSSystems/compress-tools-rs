@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache vcpkg installed
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: $VCPKG_ROOT/installed
           key: ${{ runner.os }}-vcpkg-cache-${{ matrix.linkage }}
@@ -37,7 +37,7 @@ jobs:
           VCPKG_ROOT: 'C:\vcpkg'
 
       - name: Cache vcpkg downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: $VCPKG_ROOT/downloads
           key: ${{ runner.os }}-vcpkg-cache-${{ matrix.linkage }}
@@ -60,17 +60,17 @@ jobs:
         with:
           toolchain: ${{ matrix.version }}
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/registry
           key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-registry-trimmed-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/git
           key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-index-trimmed-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: target
           key: ${{ matrix.version }}-x86_64-pc-windows-msvc-cargo-build-trimmed-${{ hashFiles('**/Cargo.lock') }}
