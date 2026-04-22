@@ -72,6 +72,11 @@ use std::{
 
 const READER_BUFFER_SIZE: usize = 16384;
 
+/// Re-export of [`libc::stat`] so `crate::stat` resolves uniformly across
+/// platforms — Windows has its own layout declared below.
+#[cfg(not(target_os = "windows"))]
+pub use libc::stat;
+
 /// `stat` layout matching the one exposed by `libarchive` on Windows.
 ///
 /// On Windows `libarchive`'s `archive_entry_stat()` returns a pointer to the
