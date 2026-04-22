@@ -592,6 +592,50 @@ fn iterate_tar() {
     assert_eq!(contents, expected);
 }
 
+/// Regression test for <https://github.com/OSSystems/compress-tools-rs/issues/138>.
+///
+/// Verifies that the `stat` fields surfaced via
+/// `ArchiveContents::StartOfEntry` match the values actually stored in
+/// `tree.tar`. On Windows the crate used to map `archive_entry_stat()` onto
+/// `libc::stat` — which on that target is `stat64`, a different layout — so
+/// `st_size` and the `st_*time` fields were read from the wrong offsets and
+/// returned garbage. A mis-aligned struct fails this test immediately because
+/// the expected values are fixed and verifiable from the archive.
+#[test]
+// `st_size` is `i32` on Windows and `i64` on Unix; `st_mtime` is `time_t`
+// (64-bit on both). The `i64::from`/`.into()` calls below normalise the
+// values across platforms — on Unix that's a no-op conversion, hence the
+// allow.
+#[allow(clippy::useless_conversion)]
+fn iterate_tar_stat_fields() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let mut iter = ArchiveIterator::from_read(source).expect("Failed to read archive");
+
+    let mut stats: Vec<(String, i64, i64)> = Vec::new();
+    for content in &mut iter {
+        if let ArchiveContents::StartOfEntry(file_name, stat) = content {
+            stats.push((file_name, i64::from(stat.st_size), stat.st_mtime.into()));
+        }
+    }
+    iter.close().unwrap();
+
+    let expected: Vec<(&str, i64, i64)> = vec![
+        ("tree/", 0, 1_556_038_329),
+        ("tree/branch1/", 0, 1_556_038_347),
+        ("tree/branch1/leaf", 12, 1_556_038_389),
+        ("tree/branch2/", 0, 1_556_038_351),
+        ("tree/branch2/leaf", 14, 1_556_038_397),
+    ];
+
+    assert_eq!(stats.len(), expected.len(), "entry count mismatch");
+    for (got, want) in stats.iter().zip(expected.iter()) {
+        assert_eq!(got.0, want.0, "name mismatch");
+        assert_eq!(got.1, want.1, "st_size mismatch for {}", got.0);
+        assert_eq!(got.2, want.2, "st_mtime mismatch for {}", got.0);
+    }
+}
+
 fn collect_iterate_names_with_encoding(
     source: std::fs::File,
     decode: DecodeCallback,
