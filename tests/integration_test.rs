@@ -910,6 +910,52 @@ fn iterate_archive_with_filter_path() {
     );
 }
 
+/// Regression test for <https://github.com/OSSystems/compress-tools-rs/issues/136>.
+#[test]
+fn deflate64_zip_listing_rejects_unsupported_method() {
+    let source = std::fs::File::open("tests/fixtures/deflate64.zip").unwrap();
+    match list_archive_files(source).expect_err("listing should fail on Deflate64") {
+        Error::UnsupportedZipCompression(entries) => {
+            assert_eq!(entries, vec![("file.txt".to_string(), 9)]);
+        }
+        other => panic!("expected Error::UnsupportedZipCompression, got {other:?}"),
+    }
+}
+
+#[test]
+fn deflate64_zip_extraction_rejects_unsupported_method() {
+    let mut source = std::fs::File::open("tests/fixtures/deflate64.zip").unwrap();
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    match uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
+        .expect_err("expected extraction to fail on Deflate64")
+    {
+        Error::UnsupportedZipCompression(entries) => {
+            assert_eq!(entries, vec![("file.txt".to_string(), 9)]);
+        }
+        other => panic!("expected Error::UnsupportedZipCompression, got {other:?}"),
+    }
+}
+
+#[test]
+fn deflate64_zip_iterator_rejects_unsupported_method() {
+    let source = std::fs::File::open("tests/fixtures/deflate64.zip").unwrap();
+    match ArchiveIterator::from_read(source)
+        .err()
+        .expect("iterator build should fail on Deflate64")
+    {
+        Error::UnsupportedZipCompression(entries) => {
+            assert_eq!(entries, vec![("file.txt".to_string(), 9)]);
+        }
+        other => panic!("expected Error::UnsupportedZipCompression, got {other:?}"),
+    }
+}
+
+#[test]
+fn deflate_zip_listing_still_works() {
+    let source = std::fs::File::open("tests/fixtures/encoding-utf8.zip").unwrap();
+    list_archive_files(source).expect("plain deflate ZIP must keep working");
+}
+
 #[test]
 fn test_slice_from_raw_parts() {
     let mut source = std::fs::File::open("tests/fixtures/slice_from_raw_parts.zip").unwrap();
