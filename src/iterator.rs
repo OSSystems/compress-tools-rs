@@ -151,7 +151,7 @@ impl<R: Read + Seek> Drop for ArchiveIterator<R> {
 
 impl<R: Read + Seek> ArchiveIterator<R> {
     fn new(
-        source: R,
+        mut source: R,
         decode: DecodeCallback,
         filter: Option<Box<EntryFilterCallbackFn>>,
     ) -> Result<ArchiveIterator<R>>
@@ -159,6 +159,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         R: Read + Seek,
     {
         let utf8_guard = ffi::UTF8LocaleGuard::new();
+        crate::zip_preflight::reject_unsupported_zip_methods(&mut source)?;
         let reader = source;
         let buffer = [0; READER_BUFFER_SIZE];
         let mut pipe = Box::new(HeapReadSeekerPipe { reader, buffer });

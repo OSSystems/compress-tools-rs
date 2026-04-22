@@ -53,11 +53,14 @@ impl Read for AsyncReadWrapper {
     }
 }
 
-// Hints Rust compiler that the seek is indeed supported, but
-// underlying, it is done by the libarchive_seek_callback() callback.
+// Channel-fed streaming reader cannot actually seek; returning `Unsupported`
+// lets callers fall back gracefully instead of panicking.
 impl Seek for AsyncReadWrapper {
     fn seek(&mut self, _: SeekFrom) -> std::io::Result<u64> {
-        unreachable!("We need to use libarchive_seek_callback() underlying.")
+        Err(std::io::Error::new(
+            ErrorKind::Unsupported,
+            "AsyncReadWrapper does not support seek",
+        ))
     }
 }
 

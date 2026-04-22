@@ -21,8 +21,12 @@
   latest versions compatible with MSRV 1.82.0 [#154]
 * Replace the discontinued `async-std` dev-dependency with `smol` in the
   `futures_support` example and integration tests (RUSTSEC-2025-0052) [#153]
+* Reject ZIP archives containing Deflate64 (method 9) entries up front with a
+  new `Error::UnsupportedZipCompression` variant, instead of silently
+  succeeding on listing and failing mid-extraction [#136]
 
 [#133]: https://github.com/OSSystems/compress-tools-rs/pull/133
+[#136]: https://github.com/OSSystems/compress-tools-rs/issues/136
 [#138]: https://github.com/OSSystems/compress-tools-rs/issues/138
 [#141]: https://github.com/OSSystems/compress-tools-rs/pull/141
 [#144]: https://github.com/OSSystems/compress-tools-rs/pull/144

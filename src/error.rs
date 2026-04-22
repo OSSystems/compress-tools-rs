@@ -27,6 +27,14 @@ pub enum Error {
     #[display("Error to create the archive struct, is null")]
     NullArchive,
 
+    #[display(
+        "Unsupported ZIP compression method in {} {}: {:?}",
+        _0.len(),
+        if _0.len() == 1 { "entry" } else { "entries" },
+        _0
+    )]
+    UnsupportedZipCompression(#[error(not(source))] Vec<(String, u16)>),
+
     #[display("Unknown error")]
     Unknown,
 }

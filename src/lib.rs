@@ -56,6 +56,7 @@ pub mod futures_support;
 mod iterator;
 #[cfg(feature = "tokio_support")]
 pub mod tokio_support;
+mod zip_preflight;
 
 use error::{archive_result, archive_result_strict};
 pub use error::{Error, Result};
@@ -428,6 +429,7 @@ where
     R: Read + Seek,
 {
     let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    zip_preflight::reject_unsupported_zip_methods(&mut reader)?;
     unsafe {
         let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
         let archive_reader = ffi::archive_read_new();
