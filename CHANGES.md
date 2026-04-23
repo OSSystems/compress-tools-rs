@@ -4,6 +4,17 @@
 
 ## [Unreleased] - ReleaseDate
 
+* flake: migrate from `flake-utils` to `red-tape`, bump nixpkgs from
+  `nixos-24.05` to `nixos-25.11`, read the MSRV channel from `Cargo.toml` via
+  `lib.importTOML`, and add the missing `xz`, `bzip2`, `zlib`, `libxml2`, and
+  `openssl` pkg-config dependencies so `cargo check --all-features` (the
+  `static` feature) builds in the devshell [#164]
+* docs.rs: drop the `static` feature from rendered docs so the crate's
+  docs.rs build stops failing on the `libb2` pkg-config probe (the
+  `static_*` features have no public API surface) [#164]
+
+[#164]: https://github.com/OSSystems/compress-tools-rs/pull/164
+
 ## [0.16.0] - 2026-04-23
 
 * **Breaking:** libarchive's "raw" format handler is no longer registered on
