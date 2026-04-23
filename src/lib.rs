@@ -46,6 +46,21 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! # Strict archive parsing
+//!
+//! Archive-listing and archive-extraction entry points (`list_archive_files`,
+//! `list_archive_entries`, `uncompress_archive`, `uncompress_archive_file`,
+//! `ArchiveIterator`, and their async/`_with_encoding` siblings) no longer
+//! register libarchive's "raw" format handler. They return an error for
+//! input that isn't a real archive instead of yielding a single entry
+//! called `data`, so callers can reliably distinguish archives from other
+//! files.
+//!
+//! Use [`uncompress_data`] for decompressing a single stream (gzip, xz, …)
+//! — it continues to support raw input because that is its purpose. For
+//! streaming iteration that should accept arbitrary bytes, opt back in
+//! with [`ArchiveIteratorBuilder::raw_format`].
 
 #[cfg(feature = "async_support")]
 pub mod async_support;
@@ -523,11 +538,6 @@ where
         let res = (|| {
             archive_result(
                 ffi::archive_read_support_filter_all(archive_reader),
-                archive_reader,
-            )?;
-
-            archive_result(
-                ffi::archive_read_support_format_raw(archive_reader),
                 archive_reader,
             )?;
 
