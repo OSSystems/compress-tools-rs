@@ -4,6 +4,11 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Rewind the source reader at the start of every seekable entry point
+  (`list_archive_files`, `list_archive_entries`, `uncompress_archive`,
+  `uncompress_archive_file`, `ArchiveIterator`, and their `_with_encoding`
+  variants), so callers can reuse the same reader across successive calls
+  without a manual `seek(SeekFrom::Start(0))` between them [#117]
 * Fix RAR extraction failing with "Can't decompress an entry marked as a
   directory" whenever the archive contains directory entries. Data reads are
   now skipped for directory entries in `uncompress_archive`,

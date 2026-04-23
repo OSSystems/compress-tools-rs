@@ -512,6 +512,8 @@ where
     R: Read + Seek,
 {
     let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    // libarchive only sniffs the format from offset 0.
+    reader.seek(SeekFrom::Start(0))?;
     zip_preflight::reject_unsupported_zip_methods(&mut reader)?;
     unsafe {
         let archive_entry: *mut ffi::archive_entry = std::ptr::null_mut();
