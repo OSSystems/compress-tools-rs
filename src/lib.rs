@@ -52,15 +52,16 @@
 //! Archive-listing and archive-extraction entry points (`list_archive_files`,
 //! `list_archive_entries`, `uncompress_archive`, `uncompress_archive_file`,
 //! `ArchiveIterator`, and their async/`_with_encoding` siblings) no longer
-//! register libarchive's "raw" format handler. They return an error for
-//! input that isn't a real archive instead of yielding a single entry
-//! called `data`, so callers can reliably distinguish archives from other
-//! files.
+//! register libarchive's "raw" format handler, so input that isn't a real
+//! archive errors out instead of yielding a single `data` entry.
 //!
 //! Use [`uncompress_data`] for decompressing a single stream (gzip, xz, …)
 //! — it continues to support raw input because that is its purpose. For
 //! streaming iteration that should accept arbitrary bytes, opt back in
-//! with [`ArchiveIteratorBuilder::raw_format`].
+//! with [`ArchiveIteratorBuilder::raw_format`]. libarchive's "mtree"
+//! handler remains enabled on all entry points; pass
+//! `ArchiveIteratorBuilder::mtree_format(false)` to the iterator if you
+//! need to reject mtree matches.
 
 #[cfg(feature = "async_support")]
 pub mod async_support;

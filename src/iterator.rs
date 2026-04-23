@@ -79,6 +79,7 @@ pub struct ArchiveIterator<R: Read + Seek> {
     current_is_dir: bool,
     closed: bool,
     error: bool,
+    mtree_format: bool,
     filter: Option<Box<EntryFilterCallbackFn>>,
 
     _pipe: Box<HeapReadSeekerPipe<R>>,
@@ -176,6 +177,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         filter: Option<Box<EntryFilterCallbackFn>>,
         password: Option<ArchivePassword>,
         raw_format: bool,
+        mtree_format: bool,
     ) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
@@ -252,6 +254,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                 current_is_dir: false,
                 closed: false,
                 error: false,
+                mtree_format,
                 filter,
 
                 _pipe: pipe,
@@ -307,7 +310,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     where
         R: Read + Seek,
     {
-        Self::new(source, decode, None, None, false)
+        Self::new(source, decode, None, None, false, true)
     }
 
     /// Iterate over the contents of an archive, streaming the contents of each
@@ -346,7 +349,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     where
         R: Read + Seek,
     {
-        Self::new(source, crate::decode_utf8, None, None, false)
+        Self::new(source, crate::decode_utf8, None, None, false, true)
     }
 
     /// Close the iterator, freeing up the associated resources.
@@ -380,6 +383,11 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         match ffi::archive_read_next_header(self.archive_reader, &mut self.archive_entry) {
             ffi::ARCHIVE_EOF => ArchiveContents::EndOfEntry,
             ffi::ARCHIVE_OK | ffi::ARCHIVE_WARN => {
+                if !self.mtree_format {
+                    if let Err(e) = reject_mtree_format(self.archive_reader) {
+                        return ArchiveContents::Err(e);
+                    }
+                }
                 let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
                 let cstr = CStr::from_ptr(ffi::archive_entry_pathname(self.archive_entry));
                 let file_name = match (self.decode)(cstr.to_bytes()) {
@@ -426,6 +434,20 @@ impl<R: Read + Seek> ArchiveIterator<R> {
             _ => ArchiveContents::Err(Error::from(self.archive_reader)),
         }
     }
+}
+
+// Must be called after a successful `archive_read_next_header`, since
+// libarchive only populates the format code once a header has been read.
+unsafe fn reject_mtree_format(archive_reader: *mut ffi::archive) -> Result<()> {
+    if ffi::archive_format(archive_reader) & ffi::ARCHIVE_FORMAT_BASE_MASK
+        == ffi::ARCHIVE_FORMAT_MTREE
+    {
+        return Err(Error::Extraction {
+            code: None,
+            details: "mtree specifications are not treated as archives".to_string(),
+        });
+    }
+    Ok(())
 }
 
 unsafe extern "C" fn libarchive_heap_seek_callback<R: Read + Seek>(
@@ -483,6 +505,7 @@ where
     filter: Option<Box<EntryFilterCallbackFn>>,
     password: Option<ArchivePassword>,
     raw_format: bool,
+    mtree_format: bool,
 }
 
 /// A builder to generate an archive iterator over the contents of an
@@ -523,6 +546,7 @@ where
             filter: None,
             password: None,
             raw_format: false,
+            mtree_format: true,
         }
     }
 
@@ -560,6 +584,16 @@ where
         self
     }
 
+    /// Accept entries from libarchive's "mtree" format handler (default).
+    ///
+    /// libarchive's mtree parser is permissive and will match free-form
+    /// text (a plain gunzip'd text file is enough); pass `false` to
+    /// reject those matches and error out instead.
+    pub fn mtree_format(mut self, enable: bool) -> ArchiveIteratorBuilder<R> {
+        self.mtree_format = enable;
+        self
+    }
+
     /// Finish the builder and generate the configured `ArchiveIterator`.
     pub fn build(self) -> Result<ArchiveIterator<R>> {
         ArchiveIterator::new(
@@ -568,6 +602,7 @@ where
             self.filter,
             self.password,
             self.raw_format,
+            self.mtree_format,
         )
     }
 }

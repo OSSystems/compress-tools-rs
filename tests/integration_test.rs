@@ -1408,11 +1408,29 @@ fn iterator_default_rejects_non_archive_bytes() {
     let source = Cursor::new(NON_ARCHIVE_BYTES);
     let saw_err = match ArchiveIterator::from_read(source) {
         Err(_) => true,
-        Ok(iter) => iter.into_iter().any(|c| matches!(c, ArchiveContents::Err(_))),
+        Ok(iter) => iter
+            .into_iter()
+            .any(|c| matches!(c, ArchiveContents::Err(_))),
     };
     assert!(
         saw_err,
         "strict iterator must surface an error on non-archive input"
+    );
+}
+
+#[test]
+fn iterator_mtree_format_opt_out_rejects_gzip_text() {
+    let source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
+    let saw_err = match ArchiveIteratorBuilder::new(source)
+        .mtree_format(false)
+        .build()
+    {
+        Err(_) => true,
+        Ok(mut iter) => iter.any(|c| matches!(c, ArchiveContents::Err(_))),
+    };
+    assert!(
+        saw_err,
+        "mtree_format(false) must reject libarchive's permissive mtree match on plain text"
     );
 }
 
