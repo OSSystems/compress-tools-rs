@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.16.0] - 2026-04-23
+
 * **Breaking:** libarchive's "raw" format handler is no longer registered on
   the archive code paths. `list_archive_files`, `list_archive_entries`,
   `uncompress_archive`, `uncompress_archive_file`, `ArchiveIterator`, and
