@@ -4,6 +4,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.16.1] - 2026-04-23
+
 * flake: migrate from `flake-utils` to `red-tape`, bump nixpkgs from
   `nixos-24.05` to `nixos-25.11`, read the MSRV channel from `Cargo.toml` via
   `lib.importTOML`, and add the missing `xz`, `bzip2`, `zlib`, `libxml2`, and
