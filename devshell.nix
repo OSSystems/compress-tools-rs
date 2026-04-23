@@ -26,6 +26,11 @@ pkgs.mkShell {
     libb2
     lz4
     zstd
+    xz
+    bzip2
+    zlib
+    libxml2
+    openssl
     clang
     llvmPackages.libclang
 
