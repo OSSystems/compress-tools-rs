@@ -175,6 +175,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         decode: DecodeCallback,
         filter: Option<Box<EntryFilterCallbackFn>>,
         password: Option<ArchivePassword>,
+        raw_format: bool,
     ) -> Result<ArchiveIterator<R>>
     where
         R: Read + Seek,
@@ -204,10 +205,12 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                     archive_reader,
                 )?;
 
-                archive_result(
-                    ffi::archive_read_support_format_raw(archive_reader),
-                    archive_reader,
-                )?;
+                if raw_format {
+                    archive_result(
+                        ffi::archive_read_support_format_raw(archive_reader),
+                        archive_reader,
+                    )?;
+                }
 
                 archive_result(
                     ffi::archive_read_set_seek_callback(
@@ -304,7 +307,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     where
         R: Read + Seek,
     {
-        Self::new(source, decode, None, None)
+        Self::new(source, decode, None, None, false)
     }
 
     /// Iterate over the contents of an archive, streaming the contents of each
@@ -343,7 +346,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     where
         R: Read + Seek,
     {
-        Self::new(source, crate::decode_utf8, None, None)
+        Self::new(source, crate::decode_utf8, None, None, false)
     }
 
     /// Close the iterator, freeing up the associated resources.
@@ -479,6 +482,7 @@ where
     decoder: DecodeCallback,
     filter: Option<Box<EntryFilterCallbackFn>>,
     password: Option<ArchivePassword>,
+    raw_format: bool,
 }
 
 /// A builder to generate an archive iterator over the contents of an
@@ -518,6 +522,7 @@ where
             decoder: crate::decode_utf8,
             filter: None,
             password: None,
+            raw_format: false,
         }
     }
 
@@ -544,8 +549,25 @@ where
         self
     }
 
+    /// Enable libarchive's "raw" format handler, which parses any byte
+    /// stream as a single-entry archive with pathname `data`.
+    ///
+    /// Disabled by default so the iterator rejects input that isn't a real
+    /// archive. Enable it only when you intentionally want to iterate over
+    /// arbitrary non-archive streams (e.g. a standalone gzip file).
+    pub fn raw_format(mut self, enable: bool) -> ArchiveIteratorBuilder<R> {
+        self.raw_format = enable;
+        self
+    }
+
     /// Finish the builder and generate the configured `ArchiveIterator`.
     pub fn build(self) -> Result<ArchiveIterator<R>> {
-        ArchiveIterator::new(self.source, self.decoder, self.filter, self.password)
+        ArchiveIterator::new(
+            self.source,
+            self.decoder,
+            self.filter,
+            self.password,
+            self.raw_format,
+        )
     }
 }

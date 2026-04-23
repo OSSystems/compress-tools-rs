@@ -1064,7 +1064,11 @@ fn iterate_zip_with_cjk_pathname() {
 fn iterate_truncated_archive() {
     let source = std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap();
 
-    for content in ArchiveIterator::from_read(source).unwrap() {
+    for content in ArchiveIteratorBuilder::new(source)
+        .raw_format(true)
+        .build()
+        .unwrap()
+    {
         if let ArchiveContents::Err(Error::Unknown) = content {
             return;
         }
@@ -1076,7 +1080,11 @@ fn iterate_truncated_archive() {
 fn uncompress_bytes_helper(bytes: &[u8]) {
     let wrapper = Cursor::new(bytes);
 
-    for content in ArchiveIterator::from_read(wrapper).unwrap() {
+    for content in ArchiveIteratorBuilder::new(wrapper)
+        .raw_format(true)
+        .build()
+        .unwrap()
+    {
         if let ArchiveContents::Err(Error::Unknown) = content {
             return;
         }
@@ -1128,7 +1136,7 @@ fn uncompress_archive_absolute_path() {
 
 #[test]
 fn decode_failure() {
-    let source = std::fs::File::open("tests/fixtures/file.txt.gz").unwrap();
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
     let decode_fail = |_bytes: &[u8]| Err(Error::Io(std::io::Error::from(ErrorKind::BrokenPipe)));
 
     for content in ArchiveIterator::from_read_with_encoding(source, decode_fail).unwrap() {
@@ -1370,4 +1378,56 @@ fn archive_password_with_nul_byte_rejected() {
         ArchivePassword::new("abc\0def").is_err(),
         "passwords containing NUL must be rejected, not panic",
     );
+}
+
+// Arbitrary binary blob that matches no libarchive format handler. Used to
+// prove the "raw" handler is the thing making this parseable: strict mode
+// errors, raw_format(true) accepts it as a single "data" entry.
+const NON_ARCHIVE_BYTES: &[u8] = &[
+    0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd, 0xfc, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
+];
+
+#[test]
+fn list_archive_files_rejects_non_archive_bytes() {
+    let source = Cursor::new(NON_ARCHIVE_BYTES);
+    assert!(
+        list_archive_files(source).is_err(),
+        "arbitrary bytes must no longer be listed as a single \"data\" entry",
+    );
+}
+
+#[test]
+fn uncompress_archive_rejects_non_archive_bytes() {
+    let source = Cursor::new(NON_ARCHIVE_BYTES);
+    let dir = tempfile::TempDir::new().unwrap();
+    assert!(uncompress_archive(source, dir.path(), Ownership::Ignore).is_err());
+}
+
+#[test]
+fn iterator_default_rejects_non_archive_bytes() {
+    let source = Cursor::new(NON_ARCHIVE_BYTES);
+    let saw_err = match ArchiveIterator::from_read(source) {
+        Err(_) => true,
+        Ok(iter) => iter.into_iter().any(|c| matches!(c, ArchiveContents::Err(_))),
+    };
+    assert!(
+        saw_err,
+        "strict iterator must surface an error on non-archive input"
+    );
+}
+
+#[test]
+fn iterator_raw_format_opt_in_accepts_non_archive_bytes() {
+    let source = Cursor::new(NON_ARCHIVE_BYTES);
+    let mut names = Vec::new();
+    for content in ArchiveIteratorBuilder::new(source)
+        .raw_format(true)
+        .build()
+        .expect("raw_format(true) should accept arbitrary bytes")
+    {
+        if let ArchiveContents::StartOfEntry(name, _) = content {
+            names.push(name);
+        }
+    }
+    assert_eq!(names, vec!["data".to_string()]);
 }
