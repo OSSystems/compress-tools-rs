@@ -15,6 +15,8 @@ pub(crate) const ARCHIVE_EXTRACT_TIME: u32 = 4;
 pub(crate) const ARCHIVE_EXTRACT_ACL: u32 = 32;
 pub(crate) const ARCHIVE_EXTRACT_FFLAGS: u32 = 64;
 pub(crate) const ARCHIVE_EXTRACT_XATTR: u32 = 128;
+pub(crate) const ARCHIVE_FORMAT_BASE_MASK: ::std::os::raw::c_int = 0xff0000;
+pub(crate) const ARCHIVE_FORMAT_MTREE: ::std::os::raw::c_int = 0x80000;
 pub(crate) type __dev_t = ::std::os::raw::c_ulong;
 pub(crate) type __uid_t = ::std::os::raw::c_uint;
 pub(crate) type __gid_t = ::std::os::raw::c_uint;
@@ -157,6 +159,9 @@ extern "C" {
 }
 extern "C" {
     pub(crate) fn archive_errno(arg1: *mut archive) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub(crate) fn archive_format(arg1: *mut archive) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub(crate) fn archive_error_string(arg1: *mut archive) -> *const ::std::os::raw::c_char;

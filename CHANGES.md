@@ -9,9 +9,12 @@
   `uncompress_archive`, `uncompress_archive_file`, `ArchiveIterator`, and
   their `_with_encoding` and async variants now return an error for input
   that isn't a real archive, instead of treating it as a single-entry
-  archive named `data`. `uncompress_data` still supports raw streams
-  (that is its purpose). Callers that want the old iterator behavior can
-  opt back in with `ArchiveIteratorBuilder::raw_format(true)` [#77]
+  archive named `data`. `uncompress_data` still supports raw streams (that
+  is its purpose). Callers that want the old iterator behavior for
+  non-archive bytes can opt back in with
+  `ArchiveIteratorBuilder::raw_format(true)`. Callers iterating with
+  `ArchiveIterator` can additionally opt out of libarchive's permissive
+  mtree matching with `ArchiveIteratorBuilder::mtree_format(false)` [#77]
 * Rewind the source reader at the start of every seekable entry point
   (`list_archive_files`, `list_archive_entries`, `uncompress_archive`,
   `uncompress_archive_file`, `ArchiveIterator`, and their `_with_encoding`

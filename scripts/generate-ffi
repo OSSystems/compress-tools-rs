@@ -40,6 +40,9 @@ bindgen \
     --allowlist-var "ARCHIVE_EXTRACT_OWNER" \
     --allowlist-var "ARCHIVE_EXTRACT_FFLAGS" \
     --allowlist-var "ARCHIVE_EXTRACT_XATTR" \
+    --allowlist-var "ARCHIVE_FORMAT_BASE_MASK" \
+    --allowlist-var "ARCHIVE_FORMAT_MTREE" \
+    --allowlist-function "archive_format" \
     --allowlist-function "archive_read_new" \
     --allowlist-function "archive_read_set_seek_callback" \
     --allowlist-function "archive_read_support_filter_all" \
