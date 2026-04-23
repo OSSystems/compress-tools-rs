@@ -557,6 +557,82 @@ fn uncompress_7z_to_dir_not_preserve_owner() {
 }
 
 #[test]
+fn get_a_file_from_rar() {
+    let mut source = std::fs::File::open("tests/fixtures/tree.rar").unwrap();
+    let mut target = Vec::default();
+
+    let written = uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
+        .expect("Failed to get the file");
+    assert_eq!(
+        String::from_utf8_lossy(&target),
+        "Goodbye World\n",
+        "Uncompressed file did not match",
+    );
+    assert_eq!(written, 14, "Uncompressed bytes count did not match");
+}
+
+#[test]
+fn iterate_rar_entries() {
+    let source = std::fs::File::open("tests/fixtures/tree.rar").unwrap();
+
+    let mut names = Vec::new();
+    let mut content = Vec::new();
+
+    for item in ArchiveIterator::from_read(source).expect("Failed to read archive") {
+        match item {
+            ArchiveContents::StartOfEntry(name, _) => names.push(name),
+            ArchiveContents::DataChunk(chunk) => {
+                if names
+                    .last()
+                    .map(|n| n == "tree/branch2/leaf")
+                    .unwrap_or(false)
+                {
+                    content.extend_from_slice(&chunk);
+                }
+            }
+            ArchiveContents::EndOfEntry => {}
+            ArchiveContents::Err(e) => panic!("iterator errored: {}", e),
+        }
+    }
+
+    assert!(
+        names.iter().any(|n| n == "tree/branch1"),
+        "directory entry missing from iteration: {:?}",
+        names
+    );
+    assert!(
+        names.iter().any(|n| n == "tree/branch2/leaf"),
+        "tree/branch2/leaf missing from iteration: {:?}",
+        names
+    );
+    assert_eq!(String::from_utf8_lossy(&content), "Goodbye World\n");
+}
+
+#[test]
+fn uncompress_rar_to_dir() {
+    let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
+    let mut source = std::fs::File::open("tests/fixtures/tree.rar").unwrap();
+
+    uncompress_archive(&mut source, dir.path(), Ownership::Ignore)
+        .expect("Failed to uncompress the file");
+
+    assert!(
+        dir.path().join("tree/branch1/leaf").exists(),
+        "the path doesn't exist"
+    );
+    assert!(
+        dir.path().join("tree/branch2/leaf").exists(),
+        "the path doesn't exist"
+    );
+
+    let contents = std::fs::read_to_string(dir.path().join("tree/branch2/leaf")).unwrap();
+    assert_eq!(
+        contents, "Goodbye World\n",
+        "Uncompressed file did not match"
+    );
+}
+
+#[test]
 fn uncompress_to_dir_with_utf8_pathname() {
     let dir = tempfile::TempDir::new().expect("Failed to create the tmp directory");
     let mut source = std::fs::File::open("tests/fixtures/utf8.tar").unwrap();

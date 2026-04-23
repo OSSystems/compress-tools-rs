@@ -4,6 +4,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Fix RAR extraction failing with "Can't decompress an entry marked as a
+  directory" whenever the archive contains directory entries. Data reads are
+  now skipped for directory entries in `uncompress_archive`,
+  `uncompress_archive_file`, and `ArchiveIterator` [#131]
 * Add `list_archive_entries` (and `_with_encoding` variant) returning path and
   uncompressed size per entry, so callers can obtain per-file sizes without
   extracting the archive. Mirrored in `async_support`, `futures_support`, and

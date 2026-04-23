@@ -380,7 +380,9 @@ where
                     ffi::archive_write_header(archive_writer, entry),
                     archive_writer,
                 )?;
-                libarchive_copy_data(archive_reader, archive_writer)?;
+                if !libarchive_entry_is_dir(entry) {
+                    libarchive_copy_data(archive_reader, archive_writer)?;
+                }
 
                 archive_result_strict(
                     ffi::archive_write_finish_entry(archive_writer),
@@ -470,6 +472,9 @@ where
                 }
             }
 
+            if libarchive_entry_is_dir(entry) {
+                return Ok(0);
+            }
             libarchive_write_data_block(archive_reader, target)
         },
     )
@@ -699,6 +704,15 @@ fn libarchive_entry_size(entry: *mut ffi::archive_entry) -> u64 {
     // on Unix. Widen through `i64` to keep the cast platform-agnostic.
     let size = unsafe { (*ffi::archive_entry_stat(entry)).st_size } as i64;
     size.max(0) as u64
+}
+
+// Raw POSIX mode bits: `libc::S_IFDIR` is not exposed on Windows, where our
+// `stat` mirrors libarchive's own layout.
+pub(crate) fn libarchive_entry_is_dir(entry: *mut ffi::archive_entry) -> bool {
+    const S_IFMT: u32 = 0o170000;
+    const S_IFDIR: u32 = 0o040000;
+    let mode = unsafe { (*ffi::archive_entry_stat(entry)).st_mode } as u32;
+    (mode & S_IFMT) == S_IFDIR
 }
 
 fn libarchive_entry_pathname<'a>(entry: *mut ffi::archive_entry) -> Result<&'a CStr> {

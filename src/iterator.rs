@@ -12,8 +12,8 @@ use crate::stat;
 use libc::stat;
 
 use crate::{
-    error::archive_result, ffi, ffi::UTF8LocaleGuard, DecodeCallback, Error, Result,
-    READER_BUFFER_SIZE,
+    error::archive_result, ffi, ffi::UTF8LocaleGuard, libarchive_entry_is_dir, DecodeCallback,
+    Error, Result, READER_BUFFER_SIZE,
 };
 
 struct HeapReadSeekerPipe<R: Read + Seek> {
@@ -76,6 +76,7 @@ pub struct ArchiveIterator<R: Read + Seek> {
 
     decode: DecodeCallback,
     in_file: bool,
+    current_is_dir: bool,
     closed: bool,
     error: bool,
     filter: Option<Box<EntryFilterCallbackFn>>,
@@ -243,6 +244,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
 
                 decode,
                 in_file: false,
+                current_is_dir: false,
                 closed: false,
                 error: false,
                 filter,
@@ -380,6 +382,7 @@ impl<R: Read + Seek> ArchiveIterator<R> {
                     Err(e) => return ArchiveContents::Err(e),
                 };
                 let stat = *ffi::archive_entry_stat(self.archive_entry);
+                self.current_is_dir = libarchive_entry_is_dir(self.archive_entry);
                 ArchiveContents::StartOfEntry(file_name, stat)
             }
             _ => ArchiveContents::Err(Error::from(self.archive_reader)),
@@ -387,6 +390,10 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     }
 
     unsafe fn next_data_chunk(&mut self) -> ArchiveContents {
+        if self.current_is_dir {
+            return ArchiveContents::EndOfEntry;
+        }
+
         let mut buffer = std::ptr::null();
         let mut offset = 0;
         let mut size = 0;
