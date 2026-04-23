@@ -154,6 +154,33 @@ fn successfully_list_archive_files() {
 }
 
 #[test]
+fn reader_is_rewound_between_calls() {
+    let mut source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let listed = list_archive_files(&mut source).unwrap();
+    assert!(listed.contains(&"tree/branch2/leaf".to_string()));
+
+    let mut target = Vec::new();
+    let written = uncompress_archive_file(&mut source, &mut target, "tree/branch2/leaf")
+        .expect("extract should succeed even though the reader was left past the archive");
+    assert_eq!(written, 14);
+    assert_eq!(String::from_utf8_lossy(&target), "Goodbye World\n");
+
+    let listed_again = list_archive_files(&mut source).unwrap();
+    assert_eq!(listed, listed_again);
+
+    let names: Vec<String> = ArchiveIteratorBuilder::new(&mut source)
+        .build()
+        .unwrap()
+        .filter_map(|c| match c {
+            ArchiveContents::StartOfEntry(name, _) => Some(name),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(names, listed);
+}
+
+#[test]
 fn successfully_list_archive_entries() {
     let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
 

@@ -180,6 +180,8 @@ impl<R: Read + Seek> ArchiveIterator<R> {
         R: Read + Seek,
     {
         let utf8_guard = ffi::UTF8LocaleGuard::new();
+        // libarchive only sniffs the format from offset 0.
+        source.seek(SeekFrom::Start(0))?;
         crate::zip_preflight::reject_unsupported_zip_methods(&mut source)?;
         let reader = source;
         let buffer = [0; READER_BUFFER_SIZE];
