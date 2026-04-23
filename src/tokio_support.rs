@@ -53,6 +53,32 @@ where
     async_support::list_archive_files(TOKIO_BLOCKING_EXECUTOR, source.compat()).await
 }
 
+/// Async version of
+/// [`list_archive_entries_with_encoding`](crate::
+/// list_archive_entries_with_encoding).
+pub async fn list_archive_entries_with_encoding<R>(
+    source: R,
+    decode: DecodeCallback,
+) -> Result<Vec<crate::ArchiveEntryInfo>>
+where
+    R: AsyncRead + AsyncSeek + Unpin,
+{
+    async_support::list_archive_entries_with_encoding(
+        TOKIO_BLOCKING_EXECUTOR,
+        source.compat(),
+        decode,
+    )
+    .await
+}
+
+/// Async version of [`list_archive_entries`](crate::list_archive_entries).
+pub async fn list_archive_entries<R>(source: R) -> Result<Vec<crate::ArchiveEntryInfo>>
+where
+    R: AsyncRead + AsyncSeek + Unpin,
+{
+    async_support::list_archive_entries(TOKIO_BLOCKING_EXECUTOR, source.compat()).await
+}
+
 /// Async version of [`uncompress_data`](crate::uncompress_data).
 pub async fn uncompress_data<R, W>(source: R, target: W) -> Result<usize>
 where

@@ -154,6 +154,26 @@ fn successfully_list_archive_files() {
 }
 
 #[test]
+fn successfully_list_archive_entries() {
+    let source = std::fs::File::open("tests/fixtures/tree.tar").unwrap();
+
+    let entries = list_archive_entries(source).unwrap();
+    let observed: Vec<(String, u64)> = entries.into_iter().map(|e| (e.path, e.size)).collect();
+
+    assert_eq!(
+        observed,
+        vec![
+            ("tree/".to_string(), 0),
+            ("tree/branch1/".to_string(), 0),
+            ("tree/branch1/leaf".to_string(), 12),
+            ("tree/branch2/".to_string(), 0),
+            ("tree/branch2/leaf".to_string(), 14),
+        ],
+        "entry list (path, size) did not match"
+    );
+}
+
+#[test]
 fn list_archive_zip() {
     let source = std::fs::File::open("tests/fixtures/test.zip").unwrap();
 
