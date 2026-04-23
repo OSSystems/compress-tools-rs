@@ -4,6 +4,11 @@
 
 ## [Unreleased] - ReleaseDate
 
+* Add `list_archive_entries` (and `_with_encoding` variant) returning path and
+  uncompressed size per entry, so callers can obtain per-file sizes without
+  extracting the archive. Mirrored in `async_support`, `futures_support`, and
+  `tokio_support`. `ArchiveIterator`'s `StartOfEntry` already exposes the same
+  `stat.st_size` for streaming users [#134]
 * Fix partial unfinished archive reads [#133]
 * Add missing `advapi32` link library on Windows builds [#141]
 * Propagate `ENOSPC` during archive extraction instead of silently truncating files [#144]

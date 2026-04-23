@@ -259,6 +259,10 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     /// Iterate over the contents of an archive, streaming the contents of each
     /// entry in small chunks.
     ///
+    /// The [`ArchiveContents::StartOfEntry`] variant carries the entry's
+    /// `stat` struct, so `stat.st_size` gives the uncompressed size reported
+    /// by the archive header without having to consume the data chunks.
+    ///
     /// ```no_run
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use compress_tools::*;
@@ -273,7 +277,10 @@ impl<R: Read + Seek> ArchiveIterator<R> {
     ///
     /// for content in &mut iter {
     ///     match content {
-    ///         ArchiveContents::StartOfEntry(s, _) => name = s,
+    ///         ArchiveContents::StartOfEntry(s, stat) => {
+    ///             name = s;
+    ///             println!("header reports {} bytes for {}", stat.st_size, name);
+    ///         }
     ///         ArchiveContents::DataChunk(v) => size += v.len(),
     ///         ArchiveContents::EndOfEntry => {
     ///             println!("Entry {} was {} bytes", name, size);

@@ -101,6 +101,17 @@ pub struct stat {
     pub st_ctime: libc::time_t,
 }
 
+/// Path and uncompressed size for a single archive entry.
+///
+/// `size` comes from the archive header and may be `0` for formats that do
+/// not record it there (some raw compressed streams, ZIP entries using a
+/// data descriptor). Tar and standard ZIP populate it reliably.
+#[derive(Clone, Debug)]
+pub struct ArchiveEntryInfo {
+    pub path: String,
+    pub size: u64,
+}
+
 /// Determine the ownership behavior when unpacking the archive.
 #[derive(Clone, Copy, Debug)]
 pub enum Ownership {
@@ -149,25 +160,10 @@ pub fn list_archive_files_with_encoding<R>(source: R, decode: DecodeCallback) ->
 where
     R: Read + Seek,
 {
-    let _utf8_guard = ffi::UTF8LocaleGuard::new();
-    run_with_archive(
-        Ownership::Ignore,
-        source,
-        |archive_reader, _, mut entry| unsafe {
-            let mut file_list = Vec::new();
-            loop {
-                match ffi::archive_read_next_header(archive_reader, &mut entry) {
-                    ffi::ARCHIVE_EOF => return Ok(file_list),
-                    value => archive_result(value, archive_reader)?,
-                }
-
-                let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
-                let cstr = libarchive_entry_pathname(entry)?;
-                let file_name = decode(cstr.to_bytes())?;
-                file_list.push(file_name);
-            }
-        },
-    )
+    Ok(list_archive_entries_with_encoding(source, decode)?
+        .into_iter()
+        .map(|e| e.path)
+        .collect())
 }
 
 /// Get all files in a archive using `source` as a reader.
@@ -189,6 +185,83 @@ where
     R: Read + Seek,
 {
     list_archive_files_with_encoding(source, decode_utf8)
+}
+
+/// Get entry metadata (path and uncompressed size) for every entry in an
+/// archive without extracting their contents.
+///
+/// See [`ArchiveEntryInfo`] for caveats on `size` reporting across formats.
+///
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar")?;
+/// let decode_utf8 = |bytes: &[u8]| Ok(std::str::from_utf8(bytes)?.to_owned());
+///
+/// for entry in list_archive_entries_with_encoding(&mut source, decode_utf8)? {
+///     println!("{}: {} bytes", entry.path, entry.size);
+/// }
+/// # Ok(())
+/// # }
+/// ```
+pub fn list_archive_entries_with_encoding<R>(
+    source: R,
+    decode: DecodeCallback,
+) -> Result<Vec<ArchiveEntryInfo>>
+where
+    R: Read + Seek,
+{
+    let _utf8_guard = ffi::UTF8LocaleGuard::new();
+    run_with_archive(
+        Ownership::Ignore,
+        source,
+        |archive_reader, _, mut entry| unsafe {
+            let mut entries = Vec::new();
+            loop {
+                match ffi::archive_read_next_header(archive_reader, &mut entry) {
+                    ffi::ARCHIVE_EOF => return Ok(entries),
+                    value => archive_result(value, archive_reader)?,
+                }
+
+                let _utf8_guard = ffi::WindowsUTF8LocaleGuard::new();
+                let cstr = libarchive_entry_pathname(entry)?;
+                let path = decode(cstr.to_bytes())?;
+                let size = libarchive_entry_size(entry);
+                entries.push(ArchiveEntryInfo { path, size });
+            }
+        },
+    )
+}
+
+/// Get entry metadata (path and uncompressed size) for every entry in an
+/// archive without extracting their contents.
+///
+/// See [`ArchiveEntryInfo`] for caveats on `size` reporting across formats.
+///
+/// # Example
+///
+/// ```no_run
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use compress_tools::*;
+/// use std::fs::File;
+///
+/// let mut source = File::open("tree.tar")?;
+///
+/// for entry in list_archive_entries(&mut source)? {
+///     println!("{}: {} bytes", entry.path, entry.size);
+/// }
+/// # Ok(())
+/// # }
+/// ```
+pub fn list_archive_entries<R>(source: R) -> Result<Vec<ArchiveEntryInfo>>
+where
+    R: Read + Seek,
+{
+    list_archive_entries_with_encoding(source, decode_utf8)
 }
 
 /// Uncompress a file using the `source` need as reader and the `target` as a
@@ -619,6 +692,13 @@ fn libarchive_copy_data(
             )?;
         }
     }
+}
+
+fn libarchive_entry_size(entry: *mut ffi::archive_entry) -> u64 {
+    // `st_size` is `i32` on Windows (see the `stat` struct above) and `i64`
+    // on Unix. Widen through `i64` to keep the cast platform-agnostic.
+    let size = unsafe { (*ffi::archive_entry_stat(entry)).st_size } as i64;
+    size.max(0) as u64
 }
 
 fn libarchive_entry_pathname<'a>(entry: *mut ffi::archive_entry) -> Result<&'a CStr> {

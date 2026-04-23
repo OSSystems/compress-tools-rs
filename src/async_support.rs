@@ -301,6 +301,36 @@ where
     wrap_async_seek_read(blocking_executor, source, crate::list_archive_files).await?
 }
 
+/// Async version of
+/// [`list_archive_entries_with_encoding`](crate::
+/// list_archive_entries_with_encoding).
+pub async fn list_archive_entries_with_encoding<B, R>(
+    blocking_executor: B,
+    source: R,
+    decode: DecodeCallback,
+) -> Result<Vec<crate::ArchiveEntryInfo>>
+where
+    B: BlockingExecutor,
+    R: AsyncRead + AsyncSeek + Unpin,
+{
+    wrap_async_seek_read(blocking_executor, source, move |source| {
+        crate::list_archive_entries_with_encoding(source, decode)
+    })
+    .await?
+}
+
+/// Async version of [`list_archive_entries`](crate::list_archive_entries).
+pub async fn list_archive_entries<B, R>(
+    blocking_executor: B,
+    source: R,
+) -> Result<Vec<crate::ArchiveEntryInfo>>
+where
+    B: BlockingExecutor,
+    R: AsyncRead + AsyncSeek + Unpin,
+{
+    wrap_async_seek_read(blocking_executor, source, crate::list_archive_entries).await?
+}
+
 /// Async version of [`uncompress_data`](crate::uncompress_data).
 pub async fn uncompress_data<B, R, W>(blocking_executor: B, source: R, target: W) -> Result<usize>
 where
