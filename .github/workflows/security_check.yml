@@ -12,7 +12,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install stable toolchain (MSRV-aware lockfile resolution)
         uses: dtolnay/rust-toolchain@stable
       - name: Generate Cargo.lock
