@@ -39,7 +39,7 @@ jobs:
           components: ${{ matrix.version == 'nightly' && 'llvm-tools-preview' || '' }}
       - name: Install grcov tool
         if: matrix.version == 'nightly'
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.5
         with:
           tool: grcov
       - name: Cache cargo registry
