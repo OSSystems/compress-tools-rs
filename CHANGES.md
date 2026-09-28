@@ -6,6 +6,13 @@
 
 * build: link `bcrypt` on MSVC targets, as libarchive 3.8.8 calls
   `BCryptGenRandom` and static builds (`x64-windows-static`) failed to link
+* deps: raise the minimum versions of all dependencies to their latest
+  releases compatible with the 1.82.0 MSRV (e.g. `tokio` 1.53.1, `futures-*`
+  0.3.34, `libc` 0.2.189) [#177]
+* flake: bump nixpkgs from `nixos-25.11` to `nixos-26.05` and refresh
+  `flake.lock` [#177]
+
+[#177]: https://github.com/OSSystems/compress-tools-rs/pull/177
 
 ## [0.16.1] - 2026-04-23
 
