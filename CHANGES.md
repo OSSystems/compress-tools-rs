@@ -4,6 +4,9 @@
 
 ## [Unreleased] - ReleaseDate
 
+* build: link `bcrypt` on MSVC targets, as libarchive 3.8.8 calls
+  `BCryptGenRandom` and static builds (`x64-windows-static`) failed to link
+
 ## [0.16.1] - 2026-04-23
 
 * flake: migrate from `flake-utils` to `red-tape`, bump nixpkgs from

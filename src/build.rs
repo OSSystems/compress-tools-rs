@@ -81,6 +81,7 @@ fn find_libarchive() {
         .expect("Unable to find libarchive");
 
     println!("cargo:rustc-link-lib=static=archive");
+    println!("cargo:rustc-link-lib=bcrypt");
     if cfg!(feature = "win_user32") {
         println!("cargo:rustc-link-lib=User32");
     }
