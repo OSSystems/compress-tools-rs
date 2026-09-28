@@ -93,7 +93,8 @@ impl From<*mut ffi::archive> for Error {
             let code = if errno > 0 {
                 Some(io::Error::from_raw_os_error(errno))
             } else {
-                // 0 (unexpected) or ARCHIVE_ERRNO_MISC which is not a valid value of errno(3)
+                // 0 (unexpected) or ARCHIVE_ERRNO_MISC which is not a valid
+                // value of errno(3)
                 None
             };
             (details, code)
