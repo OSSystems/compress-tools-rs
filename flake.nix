@@ -2,7 +2,7 @@
   description = "compress-tools-rs";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.11";
+    nixpkgs.url = "nixpkgs/nixos-26.05";
     red-tape = {
       url = "github:phaer/red-tape";
       inputs.nixpkgs.follows = "nixpkgs";
