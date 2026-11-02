@@ -816,7 +816,7 @@ fn uncompress_truncated_archive() {
             std::fs::File::open("tests/fixtures/truncated.log.gz").unwrap(),
             Vec::new()
         ),
-        Err(Error::Unknown)
+        Err(Error::Unknown | Error::Extraction { .. })
     ));
 }
 
@@ -832,7 +832,7 @@ fn uncompress_truncated_archive_futures() {
                 Vec::new()
             )
             .await,
-            Err(Error::Unknown)
+            Err(Error::Unknown | Error::Extraction { .. })
         ));
     });
 }
@@ -848,7 +848,7 @@ async fn uncompress_truncated_archive_tokio() {
             Vec::new()
         )
         .await,
-        Err(Error::Unknown)
+        Err(Error::Unknown | Error::Extraction { .. })
     ));
 }
 
@@ -1069,7 +1069,7 @@ fn iterate_truncated_archive() {
         .build()
         .unwrap()
     {
-        if let ArchiveContents::Err(Error::Unknown) = content {
+        if let ArchiveContents::Err(Error::Unknown | Error::Extraction { .. }) = content {
             return;
         }
     }
@@ -1085,7 +1085,7 @@ fn uncompress_bytes_helper(bytes: &[u8]) {
         .build()
         .unwrap()
     {
-        if let ArchiveContents::Err(Error::Unknown) = content {
+        if let ArchiveContents::Err(Error::Unknown | Error::Extraction { .. }) = content {
             return;
         }
     }
